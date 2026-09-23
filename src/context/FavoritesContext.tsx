@@ -6,6 +6,10 @@ interface FavoritesContextType {
   toggleFavorite: (clubId: string) => void;
   isFavorite: (clubId: string) => boolean;
   isOnboardingCompleted: boolean;
+  /** true enquanto ainda não sabemos se o onboarding já foi concluído
+   * (a ler o AsyncStorage). Evita decidir/redirecionar com um valor
+   * "adivinhado" e causar um flash no arranque. */
+  isLoading: boolean;
   completeOnboarding: () => Promise<void>;
   primaryClubColor: string;
 }
@@ -17,7 +21,8 @@ const ONBOARDING_STORAGE_KEY = '@santarem_score:onboarding';
 
 export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   const [favoriteClubIds, setFavoriteClubIds] = useState<string[]>([]);
-  const [isOnboardingCompleted, setIsOnboardingCompleted] = useState<boolean>(true);
+  const [isOnboardingCompleted, setIsOnboardingCompleted] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
     async function loadData() {
@@ -31,6 +36,8 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
         setIsOnboardingCompleted(storedOnboarding === 'true');
       } catch (err) {
         console.error('Erro ao carregar favoritos:', err);
+      } finally {
+        setIsLoading(false);
       }
     }
     loadData();
@@ -59,6 +66,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
         toggleFavorite,
         isFavorite,
         isOnboardingCompleted,
+        isLoading,
         completeOnboarding,
         primaryClubColor: '#16a34a',
       }}

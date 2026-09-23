@@ -14,8 +14,11 @@ import { useRouter } from 'expo-router';
 import { useFavorites } from '@/context/FavoritesContext';
 import { useClubs } from '@/hooks/useClubs';
 import { useLiveMatches } from '@/hooks/useLiveMatches';
+import { useStandings } from '@/hooks/useStandings';
 import { MatchCard } from '@/components/MatchCard';
 import { ClubBadge } from '@/components/ClubBadge';
+import { formatMatchDate } from '@/utils/dateFormat';
+import { Match, Club } from '@/types';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
@@ -28,20 +31,32 @@ const COMPETITIONS_FILTER = [
   'Taça Ribatejo',
 ];
 
+function lastResultLabel(club: Club, match: Match): string {
+  const isHome = match.homeClub.id === club.id;
+  const own = isHome ? match.homeScore : match.awayScore;
+  const rival = isHome ? match.awayScore : match.homeScore;
+  const letter = own > rival ? 'V' : own === rival ? 'E' : 'D';
+  return `${letter} ${own}-${rival}`;
+}
+
 export default function HomeScreen() {
   const router = useRouter();
   const isDark = useColorScheme() === 'dark';
-  const { favoriteClubIds, isOnboardingCompleted } = useFavorites();
+  const { favoriteClubIds, isOnboardingCompleted, isLoading: favoritesLoading } = useFavorites();
   const { clubs } = useClubs();
   const { matches, loading } = useLiveMatches();
+  const { getClubStanding } = useStandings();
   const [selectedComp, setSelectedComp] = useState('Todas');
   const [activeCardIndex, setActiveCardIndex] = useState(0);
 
   React.useEffect(() => {
-    if (!isOnboardingCompleted) {
+    // Só decide redirecionar depois de saber mesmo se o onboarding já
+    // foi concluído — evita mostrar a Home por instantes antes de saltar
+    // para a seleção de clubes.
+    if (!favoritesLoading && !isOnboardingCompleted) {
       router.replace('/(onboarding)/select-clubs');
     }
-  }, [isOnboardingCompleted]);
+  }, [favoritesLoading, isOnboardingCompleted]);
 
   const favoriteClubs = clubs.filter((c) => favoriteClubIds.includes(c.id));
 
@@ -49,6 +64,14 @@ export default function HomeScreen() {
     if (selectedComp === 'Todas') return true;
     return m.competition.includes(selectedComp.replace(' - ', ' '));
   });
+
+  if (favoritesLoading) {
+    return (
+      <SafeAreaView style={[styles.container, styles.centered, { backgroundColor: isDark ? '#09090b' : '#f4f4f5' }]}>
+        <ActivityIndicator size="large" color="#16a34a" />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#09090b' : '#f4f4f5' }]}>
@@ -68,30 +91,72 @@ export default function HomeScreen() {
                 const index = Math.round(e.nativeEvent.contentOffset.x / (width - 32));
                 setActiveCardIndex(index);
               }}
-              renderItem={({ item }) => (
-                <View
-                  style={[
-                    styles.favoriteCard,
-                    {
-                      width: width - 32,
-                      backgroundColor: isDark ? '#18181b' : '#ffffff',
-                      borderColor: isDark ? '#27272a' : '#e4e4e7',
-                    },
-                  ]}
-                >
-                  <View style={styles.cardHeader}>
-                    <ClubBadge club={item} size={40} />
-                    <View style={styles.cardHeaderText}>
-                      <Text style={[styles.clubTitle, { color: isDark ? '#f4f4f5' : '#09090b' }]}>
-                        {item.shortName}
-                      </Text>
-                      <Text style={[styles.divisionLabel, { color: isDark ? '#a1a1aa' : '#71717a' }]}>
-                        AF Santarém • {item.division === '1_divisao' ? '1.ª Divisão' : '2.ª Divisão'}
-                      </Text>
+              renderItem={({ item }) => {
+                const clubMatches = matches.filter(
+                  (m) => m.homeClub.id === item.id || m.awayClub.id === item.id
+                );
+                const lastFinished = [...clubMatches]
+                  .filter((m) => m.status === 'finished')
+                  .sort((a, b) => new Date(b.matchDate).getTime() - new Date(a.matchDate).getTime())[0];
+                const liveNow = clubMatches.find((m) => m.status === 'live' || m.status === 'halftime');
+                const nextScheduled = [...clubMatches]
+                  .filter((m) => m.status === 'scheduled')
+                  .sort((a, b) => new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime())[0];
+
+                const standing = getClubStanding(item.id, item.division);
+
+                return (
+                  <View
+                    style={[
+                      styles.favoriteCard,
+                      {
+                        width: width - 32,
+                        backgroundColor: isDark ? '#18181b' : '#ffffff',
+                        borderColor: isDark ? '#27272a' : '#e4e4e7',
+                      },
+                    ]}
+                  >
+                    <View style={styles.cardHeader}>
+                      <ClubBadge club={item} size={40} />
+                      <View style={styles.cardHeaderText}>
+                        <Text style={[styles.clubTitle, { color: isDark ? '#f4f4f5' : '#09090b' }]}>
+                          {item.shortName}
+                        </Text>
+                        <Text style={[styles.divisionLabel, { color: isDark ? '#a1a1aa' : '#71717a' }]}>
+                          AF Santarém • {item.division === '1_divisao' ? '1.ª Divisão' : '2.ª Divisão'}
+                        </Text>
+                      </View>
+                      {standing && (
+                        <View style={styles.positionBadge}>
+                          <Text style={styles.positionNumber}>{standing.position}.º</Text>
+                          <Text style={styles.positionText}>Lugar</Text>
+                        </View>
+                      )}
+                    </View>
+
+                    <View style={styles.cardStatsRow}>
+                      <View style={styles.statBox}>
+                        <Text style={[styles.statLabel, { color: isDark ? '#71717a' : '#a1a1aa' }]}>Último Jogo</Text>
+                        <Text style={[styles.statValue, { color: isDark ? '#f4f4f5' : '#09090b' }]}>
+                          {lastFinished ? lastResultLabel(item, lastFinished) : 'Sem jogos'}
+                        </Text>
+                      </View>
+                      <View style={styles.statBox}>
+                        <Text style={[styles.statLabel, { color: isDark ? '#71717a' : '#a1a1aa' }]}>Próximo Jogo</Text>
+                        {liveNow ? (
+                          <Text style={[styles.statValue, { color: '#dc2626' }]}>
+                            AO VIVO {liveNow.minute ? `${liveNow.minute}'` : ''}
+                          </Text>
+                        ) : (
+                          <Text style={[styles.statValue, { color: isDark ? '#f4f4f5' : '#09090b' }]}>
+                            {nextScheduled ? formatMatchDate(nextScheduled.matchDate) : 'Por agendar'}
+                          </Text>
+                        )}
+                      </View>
                     </View>
                   </View>
-                </View>
-              )}
+                );
+              }}
             />
 
             {favoriteClubs.length > 1 && (
@@ -162,6 +227,7 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  centered: { alignItems: 'center', justifyContent: 'center' },
   scrollContent: { paddingBottom: 40 },
   carouselContainer: { marginTop: 12, paddingHorizontal: 16 },
   favoriteCard: { padding: 16, borderRadius: 16, borderWidth: 1, marginRight: 16 },
@@ -169,6 +235,25 @@ const styles = StyleSheet.create({
   cardHeaderText: { flex: 1, marginLeft: 12 },
   clubTitle: { fontSize: 16, fontWeight: '700' },
   divisionLabel: { fontSize: 12, marginTop: 2 },
+  positionBadge: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(22, 163, 74, 0.1)',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  positionNumber: { color: '#16a34a', fontSize: 16, fontWeight: '800' },
+  positionText: { color: '#16a34a', fontSize: 10, fontWeight: '600' },
+  cardStatsRow: {
+    flexDirection: 'row',
+    marginTop: 16,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(150, 150, 150, 0.1)',
+  },
+  statBox: { flex: 1 },
+  statLabel: { fontSize: 11, fontWeight: '500' },
+  statValue: { fontSize: 14, fontWeight: '700', marginTop: 2 },
   paginationDots: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 10 },
   dot: { width: 6, height: 6, borderRadius: 3, marginHorizontal: 3 },
   activeDot: { width: 14 },
