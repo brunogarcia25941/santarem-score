@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { AppState, AppStateStatus } from 'react-native';
+import { AppState, AppStateStatus, useColorScheme } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { FavoritesProvider, useFavorites } from '@/context/FavoritesContext';
 import { AuthProvider } from '@/context/AuthContext';
 import { GoalAlertBanner } from '@/components/GoalAlertBanner';
@@ -91,46 +92,67 @@ function OfflineQueueSync() {
 }
 
 export default function RootLayout() {
+  const isDark = useColorScheme() === 'dark';
+
+  // Cores do próprio ecrã e do cabeçalho, para o fundo nativo do stack
+  // nunca ser o branco por omissão do react-native-screens — era isso
+  // que causava o "flash" branco ao abrir/fechar páginas.
+  const screenBg = isDark ? '#1a1b1e' : '#eef0f2';
+  const headerBg = isDark ? '#121214' : '#ffffff';
+  const headerBorder = isDark ? '#2c2e33' : '#e2e5e8';
+  const headerText = isDark ? '#eef0f2' : '#1a1b1e';
+
+  const headerOptions = {
+    headerShown: true,
+    headerStyle: { backgroundColor: headerBg },
+    headerTintColor: headerText,
+    headerTitleStyle: { color: headerText, fontWeight: '700' as const },
+    headerShadowVisible: true,
+    contentStyle: { backgroundColor: screenBg },
+  };
+
   return (
-    <AuthProvider>
-    <FavoritesProvider>
-      <OfflineQueueSync />
-      <RealtimeGoalWatcher />
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="delegado-login"
-          options={{
-            presentation: 'modal',
-            headerShown: true,
-            title: 'Área de Delegados',
-          }}
-        />
-        <Stack.Screen
-          name="match/[id]"
-          options={{
-            presentation: 'card',
-            headerShown: true,
-            title: 'Detalhes do Jogo',
-            // Sem deslize lateral nativo: esse movimento competia com a
-            // animação FLIP do placar/emblemas e desfazia o efeito.
-            // O gesto nativo de voltar atrás (swipe-back) mantém-se.
-            animation: 'fade',
-            animationDuration: 180,
-          }}
-        />
-        <Stack.Screen
-          name="club/[id]"
-          options={{
-            presentation: 'card',
-            headerShown: true,
-            title: 'Ficha do Clube',
-          }}
-        />
-      </Stack>
-      <StatusBar style="auto" />
-    </FavoritesProvider>
-    </AuthProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <AuthProvider>
+      <FavoritesProvider>
+        <OfflineQueueSync />
+        <RealtimeGoalWatcher />
+        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: screenBg } }}>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="delegado-login"
+            options={{
+              ...headerOptions,
+              presentation: 'modal',
+              title: 'Área de Delegados',
+            }}
+          />
+          <Stack.Screen
+            name="match/[id]"
+            options={{
+              ...headerOptions,
+              presentation: 'card',
+              title: 'Detalhes do Jogo',
+              // Sem deslize lateral nativo: esse movimento competia com a
+              // animação FLIP do placar/emblemas e desfazia o efeito.
+              // O gesto nativo de voltar atrás (swipe-back) mantém-se.
+              animation: 'fade',
+              animationDuration: 180,
+            }}
+          />
+          <Stack.Screen
+            name="club/[id]"
+            options={{
+              ...headerOptions,
+              presentation: 'card',
+              title: 'Ficha do Clube',
+            }}
+          />
+        </Stack>
+        <StatusBar style="auto" />
+      </FavoritesProvider>
+      </AuthProvider>
+    </GestureHandlerRootView>
   );
 }

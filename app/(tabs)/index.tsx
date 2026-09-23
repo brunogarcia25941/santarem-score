@@ -22,6 +22,9 @@ import { formatMatchDate } from '@/utils/dateFormat';
 import { Match, Club } from '@/types';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StadiumTexture } from '@/components/StadiumTexture';
+import { GestureDetector } from 'react-native-gesture-handler';
+import Animated from 'react-native-reanimated';
+import { useSwipeableTabs } from '@/hooks/useSwipeableTabs';
 
 const { width } = Dimensions.get('window');
 
@@ -50,6 +53,18 @@ export default function HomeScreen() {
   const { getClubStanding } = useStandings();
   const [selectedComp, setSelectedComp] = useState('Todas');
   const [activeCardIndex, setActiveCardIndex] = useState(0);
+
+  // Permite arrastar o dedo sobre a lista de jogos para percorrer as
+  // competições, de forma circular, sem precisar de tocar nos separadores.
+  const selectedCompIndex = COMPETITIONS_FILTER.indexOf(selectedComp);
+  const { panGesture, animatedStyle } = useSwipeableTabs({
+    length: COMPETITIONS_FILTER.length,
+    currentIndex: selectedCompIndex === -1 ? 0 : selectedCompIndex,
+    onChangeIndex: (index) => {
+      Haptics.selectionAsync();
+      setSelectedComp(COMPETITIONS_FILTER[index]);
+    },
+  });
 
   React.useEffect(() => {
     // Só decide redirecionar depois de saber mesmo se o onboarding já
@@ -214,8 +229,10 @@ export default function HomeScreen() {
           })}
         </ScrollView>
 
-        {/* Lista com Supabase Realtime */}
-        <View style={styles.matchesList}>
+        {/* Lista com Supabase Realtime — arrastável para o lado para
+            percorrer as competições */}
+        <GestureDetector gesture={panGesture}>
+          <Animated.View style={[styles.matchesList, animatedStyle]}>
           {loading ? (
             <ActivityIndicator size="large" color="#2f6b4a" style={{ marginTop: 24 }} />
           ) : filteredMatches.length === 0 ? (
@@ -240,7 +257,8 @@ export default function HomeScreen() {
           ) : (
             filteredMatches.map((match) => <MatchCard key={match.id} match={match} />)
           )}
-        </View>
+          </Animated.View>
+        </GestureDetector>
       </ScrollView>
     </SafeAreaView>
   );
