@@ -1,5 +1,6 @@
 import { RefObject } from 'react';
 import { View } from 'react-native';
+import { Match } from '@/types';
 
 export interface Origin {
   x: number;
@@ -12,6 +13,12 @@ export interface MatchTransitionOrigin {
   scoreboard?: Origin;
   homeBadge?: Origin;
   awayBadge?: Origin;
+  // Cópia dos dados do jogo já disponíveis na lista, para o ecrã de
+  // detalhe poder desenhar-se de imediato (placar, emblemas, nomes) em
+  // vez de mostrar um spinner de página inteira enquanto vai buscar os
+  // mesmos dados outra vez ao Supabase — isso é o que estava a atrasar
+  // (e a estragar o efeito de) a animação FLIP.
+  initialMatch?: Match;
 }
 
 // Guarda temporariamente as posições medidas na Home/lista, para o ecrã

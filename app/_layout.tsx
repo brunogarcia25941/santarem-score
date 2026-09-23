@@ -113,6 +113,11 @@ export default function RootLayout() {
             presentation: 'card',
             headerShown: true,
             title: 'Detalhes do Jogo',
+            // Sem deslize lateral nativo: esse movimento competia com a
+            // animação FLIP do placar/emblemas e desfazia o efeito.
+            // O gesto nativo de voltar atrás (swipe-back) mantém-se.
+            animation: 'fade',
+            animationDuration: 180,
           }}
         />
         <Stack.Screen

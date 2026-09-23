@@ -30,11 +30,11 @@ export default function MatchDetailScreen() {
   const router = useRouter();
   const { session, canModerateClub } = useAuth();
 
-  const [match, setMatch] = useState<Match | null>(null);
-  const [events, setEvents] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isDelegadoModalVisible, setIsDelegadoModalVisible] = useState(false);
   const [transitionOrigin] = useState(() => consumeMatchTransitionOrigin());
+  const [match, setMatch] = useState<Match | null>(transitionOrigin?.initialMatch ?? null);
+  const [events, setEvents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(!transitionOrigin?.initialMatch);
+  const [isDelegadoModalVisible, setIsDelegadoModalVisible] = useState(false);
 
   async function fetchMatchData() {
     if (!id) return;
@@ -133,7 +133,13 @@ export default function MatchDetailScreen() {
               <FlyInFromOrigin origin={transitionOrigin?.homeBadge}>
                 <ClubBadge club={match.homeClub} size={48} />
               </FlyInFromOrigin>
-              <Text style={[styles.teamName, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>{match.homeClub.shortName}</Text>
+              <Text
+                style={[styles.teamName, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}
+                numberOfLines={2}
+                ellipsizeMode="tail"
+              >
+                {match.homeClub.shortName}
+              </Text>
             </View>
 
             <View style={styles.scoreCenter}>
@@ -155,7 +161,13 @@ export default function MatchDetailScreen() {
               <FlyInFromOrigin origin={transitionOrigin?.awayBadge}>
                 <ClubBadge club={match.awayClub} size={48} />
               </FlyInFromOrigin>
-              <Text style={[styles.teamName, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>{match.awayClub.shortName}</Text>
+              <Text
+                style={[styles.teamName, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}
+                numberOfLines={2}
+                ellipsizeMode="tail"
+              >
+                {match.awayClub.shortName}
+              </Text>
             </View>
           </View>
         </View>
@@ -259,9 +271,9 @@ const styles = StyleSheet.create({
 },
   competitionText: { fontSize: 13, textAlign: 'center', marginBottom: 16 },
   scoreboard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  teamColumn: { flex: 1, alignItems: 'center' },
-  teamName: { fontSize: 13, fontWeight: '700', marginTop: 8, textAlign: 'center' },
-  scoreCenter: { alignItems: 'center', paddingHorizontal: 16 },
+  teamColumn: { flex: 1, alignItems: 'center', minWidth: 0 },
+  teamName: { fontSize: 12.5, fontWeight: '700', marginTop: 8, textAlign: 'center', lineHeight: 15 },
+  scoreCenter: { alignItems: 'center', paddingHorizontal: 8 },
   score: { fontSize: 32, fontWeight: '900', letterSpacing: 2 },
   minute: { color: '#dc2626', fontSize: 12, fontWeight: '700', marginTop: 4 },
   statusLabel: { color: '#71717a', fontSize: 12, fontWeight: '700', marginTop: 4 },

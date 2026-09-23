@@ -219,9 +219,24 @@ export default function HomeScreen() {
           {loading ? (
             <ActivityIndicator size="large" color="#2f6b4a" style={{ marginTop: 24 }} />
           ) : filteredMatches.length === 0 ? (
-            <Text style={{ textAlign: 'center', marginTop: 20, color: isDark ? '#71717a' : '#a1a1aa' }}>
-              Nenhum jogo encontrado para esta competição.
-            </Text>
+            <View style={{ alignItems: 'center', marginTop: 20 }}>
+              <Text style={{ textAlign: 'center', color: isDark ? '#71717a' : '#a1a1aa' }}>
+                {selectedComp === 'Todas'
+                  ? 'Ainda não há jogos registados.'
+                  : `Sem jogos de teste na competição "${selectedComp}".`}
+              </Text>
+              {selectedComp !== 'Todas' && (
+                <TouchableOpacity
+                  onPress={() => {
+                    Haptics.selectionAsync();
+                    setSelectedComp('Todas');
+                  }}
+                  style={{ marginTop: 10 }}
+                >
+                  <Text style={{ color: '#2f6b4a', fontWeight: '700', fontSize: 13 }}>Ver todas as competições</Text>
+                </TouchableOpacity>
+              )}
+            </View>
           ) : (
             filteredMatches.map((match) => <MatchCard key={match.id} match={match} />)
           )}
