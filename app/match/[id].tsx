@@ -120,7 +120,7 @@ export default function MatchDetailScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1a1b1e' : '#eef0f2' }]}>
-      <StadiumTexture variant="grass" />
+      <StadiumTexture variant="floodlights" />
       <ScrollView contentContainerStyle={styles.content}>
         {/* Placar de Jogo */}
         <View style={[styles.scoreCard, { backgroundColor: isDark ? '#202226' : '#ffffff' }]}>
