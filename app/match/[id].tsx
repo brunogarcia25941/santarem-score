@@ -21,7 +21,8 @@ import { DelegadoPanelModal } from '@/components/DelegadoPanelModal';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StadiumTexture } from '@/components/StadiumTexture';
 import { ScoreboardPlate } from '@/components/ScoreboardPlate';
-import Animated, { ZoomIn } from 'react-native-reanimated';
+import { FlyInFromOrigin } from '@/components/FlyInFromOrigin';
+import { consumeMatchTransitionOrigin } from '@/utils/matchTransitionOrigin';
 
 export default function MatchDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -33,6 +34,7 @@ export default function MatchDetailScreen() {
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDelegadoModalVisible, setIsDelegadoModalVisible] = useState(false);
+  const [transitionOrigin] = useState(() => consumeMatchTransitionOrigin());
 
   async function fetchMatchData() {
     if (!id) return;
@@ -128,12 +130,14 @@ export default function MatchDetailScreen() {
 
           <View style={styles.scoreboard}>
             <View style={styles.teamColumn}>
-              <ClubBadge club={match.homeClub} size={48} />
+              <FlyInFromOrigin origin={transitionOrigin?.homeBadge}>
+                <ClubBadge club={match.homeClub} size={48} />
+              </FlyInFromOrigin>
               <Text style={[styles.teamName, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>{match.homeClub.shortName}</Text>
             </View>
 
             <View style={styles.scoreCenter}>
-              <Animated.View entering={ZoomIn.duration(340).springify().damping(15)}>
+              <FlyInFromOrigin origin={transitionOrigin?.scoreboard}>
                 <ScoreboardPlate
                   homeScore={match.homeScore}
                   awayScore={match.awayScore}
@@ -141,14 +145,16 @@ export default function MatchDetailScreen() {
                   status={match.status}
                   minute={match.minute}
                 />
-              </Animated.View>
+              </FlyInFromOrigin>
               {match.status === 'finished' && (
                 <Text style={[styles.statusLabel, { marginTop: 8 }]}>Terminado</Text>
               )}
             </View>
 
             <View style={styles.teamColumn}>
-              <ClubBadge club={match.awayClub} size={48} />
+              <FlyInFromOrigin origin={transitionOrigin?.awayBadge}>
+                <ClubBadge club={match.awayClub} size={48} />
+              </FlyInFromOrigin>
               <Text style={[styles.teamName, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>{match.awayClub.shortName}</Text>
             </View>
           </View>
