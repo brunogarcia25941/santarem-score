@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,8 @@ import {
   useColorScheme,
 } from 'react-native';
 import { supabase } from '@/services/supabase';
+import { useClubs } from '@/hooks/useClubs';
+import { ClubBadge } from '@/components/ClubBadge';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface StandingRow {
@@ -37,6 +39,15 @@ export default function CompetitionsScreen() {
   const [selectedDivision, setSelectedDivision] = useState('1_divisao');
   const [standings, setStandings] = useState<StandingRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const { clubs } = useClubs();
+
+  const badgeById = useMemo(() => {
+    const map: Record<string, string | undefined> = {};
+    clubs.forEach((c) => {
+      map[c.id] = c.badgeUrl;
+    });
+    return map;
+  }, [clubs]);
 
   async function fetchStandings() {
     setLoading(true);
@@ -115,10 +126,23 @@ export default function CompetitionsScreen() {
                 </Text>
 
                 <View style={styles.colClub}>
-                  <View style={[styles.badge, { backgroundColor: row.primary_color || '#16a34a' }]}>
-                    <Text style={styles.badgeText}>{row.initials}</Text>
-                  </View>
-                  <Text style={[styles.clubName, { color: isDark ? '#f4f4f5' : '#09090b' }]} numberOfLines={1}>
+                  <ClubBadge
+                    club={{
+                      id: row.club_id,
+                      name: row.short_name,
+                      shortName: row.short_name,
+                      initials: row.initials,
+                      division: selectedDivision as any,
+                      primaryColor: row.primary_color || '#16a34a',
+                      secondaryColor: '#ffffff',
+                      stadiumName: '',
+                      latitude: 0,
+                      longitude: 0,
+                      badgeUrl: badgeById[row.club_id],
+                    }}
+                    size={22}
+                  />
+                  <Text style={[styles.clubName, { color: isDark ? '#f4f4f5' : '#09090b', marginLeft: 8 }]} numberOfLines={1}>
                     {row.short_name}
                   </Text>
                 </View>
@@ -154,8 +178,6 @@ const styles = StyleSheet.create({
   colClub: { flex: 1, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 6 },
   colStat: { width: 26, fontSize: 12, textAlign: 'center' },
   colPoints: { width: 34, fontSize: 13, textAlign: 'center' },
-  badge: { width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center', marginRight: 8 },
-  badgeText: { color: '#ffffff', fontSize: 9, fontWeight: 'bold' },
   clubName: { fontSize: 13, fontWeight: '600', flexShrink: 1 },
   emptyText: { textAlign: 'center', paddingVertical: 20, color: '#71717a', fontSize: 13 },
 });

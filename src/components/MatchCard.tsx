@@ -5,6 +5,7 @@ import * as Haptics from 'expo-haptics';
 import { Match } from '@/types';
 import { ScoreboardPlate } from './ScoreboardPlate';
 import { ClubBadge } from './ClubBadge';
+import { formatMatchDate } from '@/utils/dateFormat';
 
 interface MatchCardProps {
   match: Match;
@@ -52,7 +53,7 @@ export function MatchCard({ match }: MatchCardProps) {
           <Text style={[styles.statusText, { color: isDark ? '#636770' : '#9ca3af' }]}>FIM</Text>
         )}
         {match.status === 'scheduled' && (
-          <Text style={[styles.statusText, { color: isDark ? '#8b8f97' : '#6b7280' }]}>{match.matchDate}</Text>
+          <Text style={[styles.statusText, { color: isDark ? '#8b8f97' : '#6b7280' }]}>{formatMatchDate(match.matchDate)}</Text>
         )}
       </View>
 
