@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { Animated, Text, StyleSheet, View, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { brand } from '@/constants/theme';
 
 interface GoalAlertBannerProps {
   visible: boolean;
@@ -81,10 +82,10 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   card: {
-    backgroundColor: '#18181b',
+    backgroundColor: '#202226',
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: '#16a34a',
+    borderColor: brand.amber,
     padding: 14,
     flexDirection: 'row',
     alignItems: 'center',
@@ -97,7 +98,7 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: 'rgba(22, 163, 74, 0.2)',
+    backgroundColor: brand.amberGlow,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -109,13 +110,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    color: '#22c55e',
+    color: brand.amber,
     fontSize: 14,
     fontWeight: '800',
     letterSpacing: 0.5,
   },
   message: {
-    color: '#f4f4f5',
+    color: '#eef0f2',
     fontSize: 13,
     fontWeight: '600',
     marginTop: 2,

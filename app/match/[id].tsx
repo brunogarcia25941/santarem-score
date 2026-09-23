@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { supabase } from '@/services/supabase';
 import { mapClub } from '@/services/clubs';
 import { Match } from '@/types';
@@ -18,7 +19,9 @@ import { ClubBadge } from '@/components/ClubBadge';
 import { useAuth } from '@/context/AuthContext';
 import { DelegadoPanelModal } from '@/components/DelegadoPanelModal';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StadiumTexture } from '@/components/StadiumTexture';
 import { ScoreboardPlate } from '@/components/ScoreboardPlate';
+import Animated, { ZoomIn } from 'react-native-reanimated';
 
 export default function MatchDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -97,8 +100,8 @@ export default function MatchDetailScreen() {
 
   if (loading || !match) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#09090b' : '#f4f4f5', justifyContent: 'center' }]}>
-        <ActivityIndicator size="large" color="#16a34a" />
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1a1b1e' : '#eef0f2', justifyContent: 'center' }]}>
+        <ActivityIndicator size="large" color="#2f6b4a" />
       </SafeAreaView>
     );
   }
@@ -114,10 +117,11 @@ export default function MatchDetailScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#09090b' : '#f4f4f5' }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1a1b1e' : '#eef0f2' }]}>
+      <StadiumTexture variant="grass" />
       <ScrollView contentContainerStyle={styles.content}>
         {/* Placar de Jogo */}
-        <View style={[styles.scoreCard, { backgroundColor: isDark ? '#18181b' : '#ffffff' }]}>
+        <View style={[styles.scoreCard, { backgroundColor: isDark ? '#202226' : '#ffffff' }]}>
           <Text style={[styles.competitionText, { color: isDark ? '#a1a1aa' : '#71717a' }]}>
             {match.competition} • {match.round}
           </Text>
@@ -125,17 +129,19 @@ export default function MatchDetailScreen() {
           <View style={styles.scoreboard}>
             <View style={styles.teamColumn}>
               <ClubBadge club={match.homeClub} size={48} />
-              <Text style={[styles.teamName, { color: isDark ? '#f4f4f5' : '#09090b' }]}>{match.homeClub.shortName}</Text>
+              <Text style={[styles.teamName, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>{match.homeClub.shortName}</Text>
             </View>
 
             <View style={styles.scoreCenter}>
-              <ScoreboardPlate
-                homeScore={match.homeScore}
-                awayScore={match.awayScore}
-                size="large"
-                status={match.status}
-                minute={match.minute}
-              />
+              <Animated.View entering={ZoomIn.duration(340).springify().damping(15)}>
+                <ScoreboardPlate
+                  homeScore={match.homeScore}
+                  awayScore={match.awayScore}
+                  size="large"
+                  status={match.status}
+                  minute={match.minute}
+                />
+              </Animated.View>
               {match.status === 'finished' && (
                 <Text style={[styles.statusLabel, { marginTop: 8 }]}>Terminado</Text>
               )}
@@ -143,7 +149,7 @@ export default function MatchDetailScreen() {
 
             <View style={styles.teamColumn}>
               <ClubBadge club={match.awayClub} size={48} />
-              <Text style={[styles.teamName, { color: isDark ? '#f4f4f5' : '#09090b' }]}>{match.awayClub.shortName}</Text>
+              <Text style={[styles.teamName, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>{match.awayClub.shortName}</Text>
             </View>
           </View>
         </View>
@@ -152,7 +158,10 @@ export default function MatchDetailScreen() {
         {canModerateClub(match.homeClub.id) || canModerateClub(match.awayClub.id) ? (
           <TouchableOpacity
             style={styles.delegadoBtn}
-            onPress={() => setIsDelegadoModalVisible(true)}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setIsDelegadoModalVisible(true);
+            }}
           >
             <Ionicons name="create-outline" size={18} color="#ffffff" />
             <Text style={styles.delegadoBtnText}>Painel do Delegado (Registar Golo/Tempo)</Text>
@@ -168,10 +177,10 @@ export default function MatchDetailScreen() {
         ) : null}
 
         {/* Localização & GPS */}
-        <View style={[styles.locationCard, { backgroundColor: isDark ? '#18181b' : '#ffffff' }]}>
+        <View style={[styles.locationCard, { backgroundColor: isDark ? '#202226' : '#ffffff' }]}>
           <View style={styles.locationHeader}>
-            <Ionicons name="location" size={20} color="#16a34a" />
-            <Text style={[styles.stadiumName, { color: isDark ? '#f4f4f5' : '#09090b' }]}>
+            <Ionicons name="location" size={20} color="#2f6b4a" />
+            <Text style={[styles.stadiumName, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>
               {match.homeClub.stadiumName}
             </Text>
           </View>
@@ -190,8 +199,8 @@ export default function MatchDetailScreen() {
         </View>
 
         {/* Match Ticker em Tempo Real */}
-        <Text style={[styles.tickerTitle, { color: isDark ? '#f4f4f5' : '#09090b' }]}>Acontecimentos</Text>
-        <View style={[styles.tickerCard, { backgroundColor: isDark ? '#18181b' : '#ffffff' }]}>
+        <Text style={[styles.tickerTitle, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>Acontecimentos</Text>
+        <View style={[styles.tickerCard, { backgroundColor: isDark ? '#202226' : '#ffffff' }]}>
           {events.length === 0 ? (
             <Text style={{ color: '#71717a', textAlign: 'center', paddingVertical: 10 }}>
               Sem eventos registados até ao momento.
@@ -203,7 +212,7 @@ export default function MatchDetailScreen() {
                 <Text style={styles.eventIcon}>
                   {evt.event_type === 'GOAL' ? '⚽' : evt.event_type === 'YELLOW_CARD' ? '🟨' : '🔴'}
                 </Text>
-                <Text style={[styles.eventText, { color: isDark ? '#f4f4f5' : '#09090b' }]}>
+                <Text style={[styles.eventText, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>
                   {evt.event_type === 'GOAL' ? 'Golo' : evt.event_type === 'YELLOW_CARD' ? 'Amarelo' : 'Vermelho'}
                   {evt.player_name ? ` - ${evt.player_name}` : ''}
                   {evt.is_penalty ? ' (Penálti)' : ''}
@@ -253,7 +262,7 @@ const styles = StyleSheet.create({
   badge: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
   badgeText: { color: '#fff', fontWeight: 'bold' },
   delegadoBtn: {
-    backgroundColor: '#16a34a',
+    backgroundColor: '#2f6b4a',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -285,7 +294,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#16a34a',
+    backgroundColor: '#2f6b4a',
     paddingVertical: 10,
     borderRadius: 8,
     gap: 6,

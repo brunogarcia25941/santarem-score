@@ -68,7 +68,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
         isOnboardingCompleted,
         isLoading,
         completeOnboarding,
-        primaryClubColor: '#16a34a',
+        primaryClubColor: '#2f6b4a',
       }}
     >
       {children}

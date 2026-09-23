@@ -29,7 +29,7 @@ export function mapClub(raw: any): Club {
     shortName: raw.short_name || raw.shortName || raw.name,
     initials: raw.initials || '?',
     division: raw.division,
-    primaryColor: raw.primary_color || raw.primaryColor || '#16a34a',
+    primaryColor: raw.primary_color || raw.primaryColor || '#2f6b4a',
     secondaryColor: raw.secondary_color || raw.secondaryColor || '#ffffff',
     stadiumName: raw.stadium_name || raw.stadiumName || '',
     latitude: raw.latitude || 0,

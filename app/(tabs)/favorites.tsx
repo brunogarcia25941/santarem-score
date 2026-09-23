@@ -31,14 +31,14 @@ export default function FavoritesScreen() {
   const favoriteClubs = clubs.filter((c) => favoriteClubIds.includes(c.id));
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#09090b' : '#f4f4f5' }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1a1b1e' : '#eef0f2' }]}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {loading ? (
-          <ActivityIndicator size="large" color="#16a34a" style={{ marginTop: 40 }} />
+          <ActivityIndicator size="large" color="#2f6b4a" style={{ marginTop: 40 }} />
         ) : favoriteClubs.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Ionicons name="star-outline" size={54} color="#71717a" />
-            <Text style={[styles.emptyTitle, { color: isDark ? '#f4f4f5' : '#09090b' }]}>
+            <Text style={[styles.emptyTitle, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>
               Sem clubes favoritos
             </Text>
             <Text style={styles.emptySubtitle}>
@@ -54,7 +54,7 @@ export default function FavoritesScreen() {
         ) : (
           <>
             <View style={styles.header}>
-              <Text style={[styles.sectionTitle, { color: isDark ? '#f4f4f5' : '#09090b' }]}>
+              <Text style={[styles.sectionTitle, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>
                 Os Teus Clubes ({favoriteClubs.length})
               </Text>
               <TouchableOpacity onPress={() => router.push('/(onboarding)/select-clubs')}>
@@ -68,18 +68,18 @@ export default function FavoritesScreen() {
                   key={club.id}
                   style={[
                     styles.clubChip,
-                    { backgroundColor: isDark ? '#18181b' : '#ffffff', borderColor: isDark ? '#27272a' : '#e4e4e7' },
+                    { backgroundColor: isDark ? '#202226' : '#ffffff', borderColor: isDark ? '#2c2e33' : '#e2e5e8' },
                   ]}
                 >
                   <ClubBadge club={club} size={20} />
-                  <Text style={[styles.clubChipText, { color: isDark ? '#f4f4f5' : '#09090b' }]}>
+                  <Text style={[styles.clubChipText, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>
                     {club.shortName}
                   </Text>
                 </View>
               ))}
             </ScrollView>
 
-            <Text style={[styles.sectionTitle, { color: isDark ? '#f4f4f5' : '#09090b', marginTop: 24 }]}>
+            <Text style={[styles.sectionTitle, { color: isDark ? '#eef0f2' : '#1a1b1e', marginTop: 24 }]}>
               Jogos das Tuas Equipas
             </Text>
 
@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
   scrollContent: { padding: 16 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   sectionTitle: { fontSize: 16, fontWeight: '800' },
-  editLink: { color: '#16a34a', fontWeight: '700', fontSize: 13 },
+  editLink: { color: '#2f6b4a', fontWeight: '700', fontSize: 13 },
   clubsRow: { flexDirection: 'row', marginBottom: 10 },
   clubChip: {
     flexDirection: 'row',
@@ -120,6 +120,6 @@ const styles = StyleSheet.create({
   emptyContainer: { alignItems: 'center', justifyContent: 'center', paddingVertical: 80, paddingHorizontal: 20 },
   emptyTitle: { fontSize: 18, fontWeight: '700', marginTop: 16 },
   emptySubtitle: { textAlign: 'center', color: '#71717a', fontSize: 13, marginTop: 6, marginBottom: 20 },
-  selectBtn: { backgroundColor: '#16a34a', paddingHorizontal: 20, paddingVertical: 12, borderRadius: 10 },
+  selectBtn: { backgroundColor: '#2f6b4a', paddingHorizontal: 20, paddingVertical: 12, borderRadius: 10 },
   selectBtnText: { color: '#ffffff', fontWeight: '700' },
 });

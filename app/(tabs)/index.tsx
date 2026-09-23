@@ -11,6 +11,7 @@ import {
   useColorScheme,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import { useFavorites } from '@/context/FavoritesContext';
 import { useClubs } from '@/hooks/useClubs';
 import { useLiveMatches } from '@/hooks/useLiveMatches';
@@ -20,6 +21,7 @@ import { ClubBadge } from '@/components/ClubBadge';
 import { formatMatchDate } from '@/utils/dateFormat';
 import { Match, Club } from '@/types';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StadiumTexture } from '@/components/StadiumTexture';
 
 const { width } = Dimensions.get('window');
 
@@ -67,14 +69,15 @@ export default function HomeScreen() {
 
   if (favoritesLoading) {
     return (
-      <SafeAreaView style={[styles.container, styles.centered, { backgroundColor: isDark ? '#09090b' : '#f4f4f5' }]}>
-        <ActivityIndicator size="large" color="#16a34a" />
+      <SafeAreaView style={[styles.container, styles.centered, { backgroundColor: isDark ? '#1a1b1e' : '#eef0f2' }]}>
+        <ActivityIndicator size="large" color="#2f6b4a" />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#09090b' : '#f4f4f5' }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1a1b1e' : '#eef0f2' }]}>
+      <StadiumTexture variant="grass" />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* Carrossel de Equipas Favoritas */}
         {favoriteClubs.length > 0 && (
@@ -111,15 +114,15 @@ export default function HomeScreen() {
                       styles.favoriteCard,
                       {
                         width: width - 32,
-                        backgroundColor: isDark ? '#18181b' : '#ffffff',
-                        borderColor: isDark ? '#27272a' : '#e4e4e7',
+                        backgroundColor: isDark ? '#202226' : '#ffffff',
+                        borderColor: isDark ? '#2c2e33' : '#e2e5e8',
                       },
                     ]}
                   >
                     <View style={styles.cardHeader}>
                       <ClubBadge club={item} size={40} />
                       <View style={styles.cardHeaderText}>
-                        <Text style={[styles.clubTitle, { color: isDark ? '#f4f4f5' : '#09090b' }]}>
+                        <Text style={[styles.clubTitle, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>
                           {item.shortName}
                         </Text>
                         <Text style={[styles.divisionLabel, { color: isDark ? '#a1a1aa' : '#71717a' }]}>
@@ -137,7 +140,7 @@ export default function HomeScreen() {
                     <View style={styles.cardStatsRow}>
                       <View style={styles.statBox}>
                         <Text style={[styles.statLabel, { color: isDark ? '#71717a' : '#a1a1aa' }]}>Último Jogo</Text>
-                        <Text style={[styles.statValue, { color: isDark ? '#f4f4f5' : '#09090b' }]}>
+                        <Text style={[styles.statValue, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>
                           {lastFinished ? lastResultLabel(item, lastFinished) : 'Sem jogos'}
                         </Text>
                       </View>
@@ -148,7 +151,7 @@ export default function HomeScreen() {
                             AO VIVO {liveNow.minute ? `${liveNow.minute}'` : ''}
                           </Text>
                         ) : (
-                          <Text style={[styles.statValue, { color: isDark ? '#f4f4f5' : '#09090b' }]}>
+                          <Text style={[styles.statValue, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>
                             {nextScheduled ? formatMatchDate(nextScheduled.matchDate) : 'Por agendar'}
                           </Text>
                         )}
@@ -167,7 +170,7 @@ export default function HomeScreen() {
                     style={[
                       styles.dot,
                       activeCardIndex === i ? styles.activeDot : null,
-                      { backgroundColor: activeCardIndex === i ? '#16a34a' : isDark ? '#3f3f46' : '#d4d4d8' },
+                      { backgroundColor: activeCardIndex === i ? '#2f6b4a' : isDark ? '#3f3f46' : '#d4d4d8' },
                     ]}
                   />
                 ))}
@@ -177,7 +180,7 @@ export default function HomeScreen() {
         )}
 
         {/* Filtros */}
-        <Text style={[styles.sectionTitle, { color: isDark ? '#f4f4f5' : '#09090b' }]}>Jogos do Distrito</Text>
+        <Text style={[styles.sectionTitle, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>Jogos do Distrito</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filtersScroll}>
           {COMPETITIONS_FILTER.map((comp) => {
             const isSelected = selectedComp === comp;
@@ -187,10 +190,13 @@ export default function HomeScreen() {
                 style={[
                   styles.filterPill,
                   {
-                    backgroundColor: isSelected ? '#16a34a' : isDark ? '#18181b' : '#e4e4e7',
+                    backgroundColor: isSelected ? '#2f6b4a' : isDark ? '#202226' : '#e2e5e8',
                   },
                 ]}
-                onPress={() => setSelectedComp(comp)}
+                onPress={() => {
+                  Haptics.selectionAsync();
+                  setSelectedComp(comp);
+                }}
               >
                 <Text
                   style={[
@@ -211,7 +217,7 @@ export default function HomeScreen() {
         {/* Lista com Supabase Realtime */}
         <View style={styles.matchesList}>
           {loading ? (
-            <ActivityIndicator size="large" color="#16a34a" style={{ marginTop: 24 }} />
+            <ActivityIndicator size="large" color="#2f6b4a" style={{ marginTop: 24 }} />
           ) : filteredMatches.length === 0 ? (
             <Text style={{ textAlign: 'center', marginTop: 20, color: isDark ? '#71717a' : '#a1a1aa' }}>
               Nenhum jogo encontrado para esta competição.
@@ -237,13 +243,13 @@ const styles = StyleSheet.create({
   divisionLabel: { fontSize: 12, marginTop: 2 },
   positionBadge: {
     alignItems: 'center',
-    backgroundColor: 'rgba(22, 163, 74, 0.1)',
+    backgroundColor: 'rgba(47, 107, 74, 0.1)',
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 8,
   },
-  positionNumber: { color: '#16a34a', fontSize: 16, fontWeight: '800' },
-  positionText: { color: '#16a34a', fontSize: 10, fontWeight: '600' },
+  positionNumber: { color: '#2f6b4a', fontSize: 16, fontWeight: '800' },
+  positionText: { color: '#2f6b4a', fontSize: 10, fontWeight: '600' },
   cardStatsRow: {
     flexDirection: 'row',
     marginTop: 16,

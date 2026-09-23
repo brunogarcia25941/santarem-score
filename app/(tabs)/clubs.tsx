@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { useClubs } from '@/hooks/useClubs';
 import { useFavorites } from '@/context/FavoritesContext';
@@ -31,13 +32,13 @@ export default function ClubsScreen() {
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#09090b' : '#f4f4f5' }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1a1b1e' : '#eef0f2' }]}>
       {/* Barra de Pesquisa */}
       <View style={styles.searchContainer}>
         <View
           style={[
             styles.searchBar,
-            { backgroundColor: isDark ? '#18181b' : '#ffffff', borderColor: isDark ? '#27272a' : '#e4e4e7' },
+            { backgroundColor: isDark ? '#202226' : '#ffffff', borderColor: isDark ? '#2c2e33' : '#e2e5e8' },
           ]}
         >
           <Ionicons name="search" size={18} color="#71717a" />
@@ -46,7 +47,7 @@ export default function ClubsScreen() {
             placeholderTextColor="#71717a"
             value={search}
             onChangeText={setSearch}
-            style={[styles.searchInput, { color: isDark ? '#f4f4f5' : '#09090b' }]}
+            style={[styles.searchInput, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}
           />
           {search.length > 0 && (
             <TouchableOpacity onPress={() => setSearch('')}>
@@ -57,7 +58,7 @@ export default function ClubsScreen() {
       </View>
 
       {loading ? (
-        <ActivityIndicator size="large" color="#16a34a" style={{ marginTop: 24 }} />
+        <ActivityIndicator size="large" color="#2f6b4a" style={{ marginTop: 24 }} />
       ) : error ? (
         <View style={styles.errorBox}>
           <Text style={styles.errorText}>Não foi possível carregar os clubes.</Text>
@@ -77,14 +78,17 @@ export default function ClubsScreen() {
                 activeOpacity={0.7}
                 style={[
                   styles.clubCard,
-                  { backgroundColor: isDark ? '#18181b' : '#ffffff', borderColor: isDark ? '#27272a' : '#e4e4e7' },
+                  { backgroundColor: isDark ? '#202226' : '#ffffff', borderColor: isDark ? '#2c2e33' : '#e2e5e8' },
                 ]}
-                onPress={() => router.push(`/club/${item.id}`)}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  router.push(`/club/${item.id}`);
+                }}
               >
                 <ClubBadge club={item} size={44} />
 
                 <View style={styles.clubInfo}>
-                  <Text style={[styles.clubName, { color: isDark ? '#f4f4f5' : '#09090b' }]}>
+                  <Text style={[styles.clubName, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>
                     {item.name}
                   </Text>
                   <Text style={[styles.stadiumName, { color: isDark ? '#a1a1aa' : '#71717a' }]}>
@@ -93,7 +97,10 @@ export default function ClubsScreen() {
                 </View>
 
                 <TouchableOpacity
-                  onPress={() => toggleFavorite(item.id)}
+                  onPress={() => {
+                    Haptics.selectionAsync();
+                    toggleFavorite(item.id);
+                  }}
                   style={styles.starBtn}
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
@@ -128,7 +135,7 @@ const styles = StyleSheet.create({
   listContent: { paddingHorizontal: 16, paddingBottom: 30 },
   errorBox: { alignItems: 'center', marginTop: 24, paddingHorizontal: 20 },
   errorText: { color: '#71717a', fontSize: 14, textAlign: 'center', marginBottom: 12 },
-  retryBtn: { backgroundColor: '#16a34a', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8 },
+  retryBtn: { backgroundColor: '#2f6b4a', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8 },
   retryBtnText: { color: '#ffffff', fontWeight: '700' },
   clubCard: {
     flexDirection: 'row',

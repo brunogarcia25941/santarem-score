@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { useClubs } from '@/hooks/useClubs';
 import { useFavorites } from '@/context/FavoritesContext';
 import { useLiveMatches } from '@/hooks/useLiveMatches';
@@ -40,8 +41,8 @@ export default function ClubDetailScreen() {
 
   if (loading || !club) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#09090b' : '#f4f4f5', justifyContent: 'center' }]}>
-        <ActivityIndicator size="large" color="#16a34a" />
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1a1b1e' : '#eef0f2', justifyContent: 'center' }]}>
+        <ActivityIndicator size="large" color="#2f6b4a" />
       </SafeAreaView>
     );
   }
@@ -59,13 +60,13 @@ export default function ClubDetailScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#09090b' : '#f4f4f5' }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1a1b1e' : '#eef0f2' }]}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* Cartão de Apresentação do Clube */}
-        <View style={[styles.clubHero, { backgroundColor: isDark ? '#18181b' : '#ffffff' }]}>
+        <View style={[styles.clubHero, { backgroundColor: isDark ? '#202226' : '#ffffff' }]}>
           <ClubBadge club={club} size={72} />
 
-          <Text style={[styles.clubNameTitle, { color: isDark ? '#f4f4f5' : '#09090b' }]}>
+          <Text style={[styles.clubNameTitle, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>
             {club.name}
           </Text>
 
@@ -78,11 +79,14 @@ export default function ClubDetailScreen() {
             style={[
               styles.favoriteToggleBtn,
               {
-                backgroundColor: isFav ? 'rgba(234, 179, 8, 0.15)' : isDark ? '#27272a' : '#e4e4e7',
+                backgroundColor: isFav ? 'rgba(234, 179, 8, 0.15)' : isDark ? '#2c2e33' : '#e2e5e8',
                 borderColor: isFav ? '#eab308' : 'transparent',
               },
             ]}
-            onPress={() => toggleFavorite(club.id)}
+            onPress={() => {
+              Haptics.selectionAsync();
+              toggleFavorite(club.id);
+            }}
           >
             <Ionicons
               name={isFav ? 'star' : 'star-outline'}
@@ -92,7 +96,7 @@ export default function ClubDetailScreen() {
             <Text
               style={[
                 styles.favoriteToggleText,
-                { color: isFav ? '#eab308' : isDark ? '#f4f4f5' : '#09090b' },
+                { color: isFav ? '#eab308' : isDark ? '#eef0f2' : '#1a1b1e' },
               ]}
             >
               {isFav ? 'Clube Favorito' : 'Adicionar aos Favoritos'}
@@ -101,11 +105,11 @@ export default function ClubDetailScreen() {
         </View>
 
         {/* Estádio & Coordenadas GPS */}
-        <View style={[styles.stadiumCard, { backgroundColor: isDark ? '#18181b' : '#ffffff' }]}>
+        <View style={[styles.stadiumCard, { backgroundColor: isDark ? '#202226' : '#ffffff' }]}>
           <View style={styles.stadiumHeader}>
-            <Ionicons name="location" size={22} color="#16a34a" />
+            <Ionicons name="location" size={22} color="#2f6b4a" />
             <View style={{ marginLeft: 10, flex: 1 }}>
-              <Text style={[styles.stadiumTitle, { color: isDark ? '#f4f4f5' : '#09090b' }]}>
+              <Text style={[styles.stadiumTitle, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>
                 {club.stadiumName}
               </Text>
               <Text style={[styles.coordsText, { color: isDark ? '#a1a1aa' : '#71717a' }]}>
@@ -128,7 +132,7 @@ export default function ClubDetailScreen() {
         </View>
 
         {/* Calendário e Jogos do Clube */}
-        <Text style={[styles.sectionTitle, { color: isDark ? '#f4f4f5' : '#09090b' }]}>
+        <Text style={[styles.sectionTitle, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>
           Jogos e Resultados
         </Text>
 
@@ -206,7 +210,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#16a34a',
+    backgroundColor: '#2f6b4a',
     paddingVertical: 10,
     borderRadius: 8,
     gap: 6,
