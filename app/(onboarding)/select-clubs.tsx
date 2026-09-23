@@ -7,16 +7,19 @@ import {
   TouchableOpacity,
   SafeAreaView,
   useColorScheme,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { SANTARÉM_CLUBS } from '@/constants/clubs';
+import { useClubs } from '@/hooks/useClubs';
 import { useFavorites } from '@/context/FavoritesContext';
+import { ClubBadge } from '@/components/ClubBadge';
 
 export default function SelectClubsScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const { clubs, loading, error, refresh } = useClubs();
   const { isFavorite, toggleFavorite, completeOnboarding, favoriteClubIds } = useFavorites();
 
   const handleContinue = async () => {
@@ -35,50 +38,59 @@ export default function SelectClubsScreen() {
         </Text>
       </View>
 
-      <FlatList
-        data={SANTARÉM_CLUBS}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-        renderItem={({ item }) => {
-          const selected = isFavorite(item.id);
-          return (
-            <TouchableOpacity
-              activeOpacity={0.8}
-              style={[
-                styles.clubCard,
-                {
-                  backgroundColor: isDark ? '#18181b' : '#ffffff',
-                  borderColor: selected ? '#16a34a' : isDark ? '#27272a' : '#e4e4e7',
-                },
-              ]}
-              onPress={() => toggleFavorite(item.id)}
-            >
-              <View style={[styles.badge, { backgroundColor: item.primaryColor }]}>
-                <Text style={styles.badgeText}>{item.initials}</Text>
-              </View>
-
-              <View style={styles.clubInfo}>
-                <Text style={[styles.clubName, { color: isDark ? '#f4f4f5' : '#09090b' }]}>
-                  {item.shortName}
-                </Text>
-                <Text style={[styles.stadium, { color: isDark ? '#71717a' : '#71717a' }]}>
-                  {item.stadiumName}
-                </Text>
-              </View>
-
-              <View
+      {loading ? (
+        <ActivityIndicator size="large" color="#16a34a" style={{ marginTop: 40 }} />
+      ) : error ? (
+        <View style={styles.errorBox}>
+          <Text style={styles.errorText}>Não foi possível carregar os clubes.</Text>
+          <TouchableOpacity onPress={refresh} style={styles.retryBtn}>
+            <Text style={styles.retryBtnText}>Tentar novamente</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <FlatList
+          data={clubs}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+          renderItem={({ item }) => {
+            const selected = isFavorite(item.id);
+            return (
+              <TouchableOpacity
+                activeOpacity={0.8}
                 style={[
-                  styles.checkbox,
-                  selected && styles.checkboxActive,
-                  { borderColor: selected ? '#16a34a' : isDark ? '#3f3f46' : '#d4d4d8' },
+                  styles.clubCard,
+                  {
+                    backgroundColor: isDark ? '#18181b' : '#ffffff',
+                    borderColor: selected ? '#16a34a' : isDark ? '#27272a' : '#e4e4e7',
+                  },
                 ]}
+                onPress={() => toggleFavorite(item.id)}
               >
-                {selected && <Ionicons name="checkmark" size={16} color="#ffffff" />}
-              </View>
-            </TouchableOpacity>
-          );
-        }}
-      />
+                <ClubBadge club={item} size={44} />
+
+                <View style={styles.clubInfo}>
+                  <Text style={[styles.clubName, { color: isDark ? '#f4f4f5' : '#09090b' }]}>
+                    {item.shortName}
+                  </Text>
+                  <Text style={[styles.stadium, { color: isDark ? '#71717a' : '#71717a' }]}>
+                    {item.stadiumName}
+                  </Text>
+                </View>
+
+                <View
+                  style={[
+                    styles.checkbox,
+                    selected && styles.checkboxActive,
+                    { borderColor: selected ? '#16a34a' : isDark ? '#3f3f46' : '#d4d4d8' },
+                  ]}
+                >
+                  {selected && <Ionicons name="checkmark" size={16} color="#ffffff" />}
+                </View>
+              </TouchableOpacity>
+            );
+          }}
+        />
+      )}
 
       <View style={[styles.footer, { backgroundColor: isDark ? '#09090b' : '#f4f4f5' }]}>
         <TouchableOpacity
@@ -122,6 +134,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 100,
   },
+  errorBox: { alignItems: 'center', marginTop: 40, paddingHorizontal: 20 },
+  errorText: { color: '#71717a', fontSize: 14, textAlign: 'center', marginBottom: 12 },
+  retryBtn: { backgroundColor: '#16a34a', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8 },
+  retryBtnText: { color: '#ffffff', fontWeight: '700' },
   clubCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -129,18 +145,6 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     marginBottom: 10,
     borderWidth: 1.5,
-  },
-  badge: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  badgeText: {
-    color: '#ffffff',
-    fontWeight: 'bold',
-    fontSize: 13,
   },
   clubInfo: {
     flex: 1,

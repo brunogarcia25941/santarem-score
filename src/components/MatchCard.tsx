@@ -1,7 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import { Match } from '@/types';
+import { ScoreboardPlate } from './ScoreboardPlate';
+import { ClubBadge } from './ClubBadge';
 
 interface MatchCardProps {
   match: Match;
@@ -10,23 +13,31 @@ interface MatchCardProps {
 export function MatchCard({ match }: MatchCardProps) {
   const router = useRouter();
   const isDark = useColorScheme() === 'dark';
-
   const isLive = match.status === 'live' || match.status === 'halftime';
+
+  const handlePress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push(`/match/${match.id}`);
+  };
 
   return (
     <TouchableOpacity
-      activeOpacity={0.7}
+      activeOpacity={0.85}
       style={[
         styles.card,
         {
-          backgroundColor: isDark ? '#18181b' : '#ffffff',
-          borderColor: isDark ? '#27272a' : '#e4e4e7',
+          backgroundColor: isDark ? '#1a1b1e' : '#f0f2f5',
+          borderColor: isDark ? '#2a2b30' : '#ffffff',
+          shadowColor: isDark ? '#08080a' : '#c2c6cc',
         },
       ]}
-      onPress={() => router.push(`/match/${match.id}`)}
+      onPress={handlePress}
     >
+      {/* Luz no topo do cartão (micro-chanfro neumórfico) */}
+      <View style={[styles.topBevel, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#ffffff' }]} />
+
       <View style={styles.header}>
-        <Text style={[styles.competition, { color: isDark ? '#a1a1aa' : '#71717a' }]}>
+        <Text style={[styles.competition, { color: isDark ? '#8b8f97' : '#6b7280' }]}>
           {match.competition} • {match.round}
         </Text>
         {isLive && (
@@ -38,40 +49,45 @@ export function MatchCard({ match }: MatchCardProps) {
           </View>
         )}
         {match.status === 'finished' && (
-          <Text style={[styles.statusText, { color: isDark ? '#71717a' : '#a1a1aa' }]}>Terminado</Text>
+          <Text style={[styles.statusText, { color: isDark ? '#636770' : '#9ca3af' }]}>FIM</Text>
         )}
         {match.status === 'scheduled' && (
-          <Text style={[styles.statusText, { color: isDark ? '#a1a1aa' : '#71717a' }]}>{match.matchDate}</Text>
+          <Text style={[styles.statusText, { color: isDark ? '#8b8f97' : '#6b7280' }]}>{match.matchDate}</Text>
         )}
       </View>
 
       <View style={styles.teamsRow}>
+        {/* Equipa Visitada */}
         <View style={styles.team}>
-          <View style={[styles.teamBadge, { backgroundColor: match.homeClub.primaryColor }]}>
-            <Text style={styles.badgeText}>{match.homeClub.initials}</Text>
-          </View>
-          <Text style={[styles.teamName, { color: isDark ? '#f4f4f5' : '#09090b' }]} numberOfLines={1}>
+          <ClubBadge club={match.homeClub} size={34} />
+          <Text style={[styles.teamName, { color: isDark ? '#e4e6eb' : '#111827' }]} numberOfLines={1}>
             {match.homeClub.shortName}
           </Text>
         </View>
 
-        <View style={styles.scoreContainer}>
+        {/* Placar Eletrónico LED Embutido */}
+        <View style={styles.scoreboardWrapper}>
           {match.status === 'scheduled' ? (
-            <Text style={[styles.vsText, { color: isDark ? '#71717a' : '#a1a1aa' }]}>VS</Text>
+            <View style={styles.vsPlate}>
+              <Text style={styles.vsText}>VS</Text>
+            </View>
           ) : (
-            <Text style={[styles.scoreText, { color: isDark ? '#f4f4f5' : '#09090b' }]}>
-              {match.homeScore} - {match.awayScore}
-            </Text>
+            <ScoreboardPlate
+              homeScore={match.homeScore}
+              awayScore={match.awayScore}
+              size="small"
+              status={match.status}
+              minute={match.minute}
+            />
           )}
         </View>
 
+        {/* Equipa Visitante */}
         <View style={[styles.team, styles.teamAway]}>
-          <Text style={[styles.teamName, styles.textRight, { color: isDark ? '#f4f4f5' : '#09090b' }]} numberOfLines={1}>
+          <Text style={[styles.teamName, styles.textRight, { color: isDark ? '#e4e6eb' : '#111827' }]} numberOfLines={1}>
             {match.awayClub.shortName}
           </Text>
-          <View style={[styles.teamBadge, { backgroundColor: match.awayClub.primaryColor }]}>
-            <Text style={styles.badgeText}>{match.awayClub.initials}</Text>
-          </View>
+          <ClubBadge club={match.awayClub} size={34} />
         </View>
       </View>
     </TouchableOpacity>
@@ -80,44 +96,62 @@ export function MatchCard({ match }: MatchCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 14,
-    marginBottom: 10,
+    marginBottom: 12,
     borderWidth: 1,
+    overflow: 'hidden',
+    position: 'relative',
+    // Elevação física neumórfica
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.7,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  topBevel: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 1,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   competition: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
   },
   liveBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(220, 38, 38, 0.1)',
-    paddingHorizontal: 8,
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    paddingHorizontal: 7,
     paddingVertical: 2,
-    borderRadius: 6,
+    borderRadius: 5,
+    borderWidth: 0.5,
+    borderColor: 'rgba(239, 68, 68, 0.4)',
   },
   liveDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#dc2626',
-    marginRight: 4,
+    backgroundColor: '#ef4444',
+    marginRight: 5,
   },
   liveText: {
-    color: '#dc2626',
-    fontSize: 11,
-    fontWeight: '700',
+    color: '#ef4444',
+    fontSize: 10,
+    fontWeight: '800',
   },
   statusText: {
-    fontSize: 12,
-    fontWeight: '500',
+    fontSize: 11,
+    fontWeight: '600',
   },
   teamsRow: {
     flexDirection: 'row',
@@ -133,11 +167,16 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   teamBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    elevation: 2,
   },
   badgeText: {
     color: '#fff',
@@ -145,24 +184,28 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   teamName: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 13,
+    fontWeight: '700',
     marginHorizontal: 8,
     flexShrink: 1,
   },
   textRight: {
     textAlign: 'right',
   },
-  scoreContainer: {
-    paddingHorizontal: 12,
+  scoreboardWrapper: {
+    paddingHorizontal: 8,
   },
-  scoreText: {
-    fontSize: 18,
-    fontWeight: '800',
-    letterSpacing: 2,
+  vsPlate: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    backgroundColor: '#0c0d0e',
+    borderWidth: 1,
+    borderColor: '#26282b',
   },
   vsText: {
-    fontSize: 12,
-    fontWeight: '700',
+    color: '#8b8f97',
+    fontSize: 11,
+    fontWeight: '800',
   },
 });

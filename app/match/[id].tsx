@@ -1,14 +1,107 @@
-import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Linking, useColorScheme, ScrollView } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Linking,
+  useColorScheme,
+  ScrollView,
+  ActivityIndicator,
+} from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { MOCK_MATCHES } from '@/constants/matches';
+import { supabase } from '@/services/supabase';
+import { mapClub } from '@/services/clubs';
+import { Match } from '@/types';
+import { ClubBadge } from '@/components/ClubBadge';
+import { useAuth } from '@/context/AuthContext';
+import { DelegadoPanelModal } from '@/components/DelegadoPanelModal';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { ScoreboardPlate } from '@/components/ScoreboardPlate';
 
 export default function MatchDetailScreen() {
-  const { id } = useLocalSearchParams();
+  const { id } = useLocalSearchParams<{ id: string }>();
   const isDark = useColorScheme() === 'dark';
+  const router = useRouter();
+  const { session, canModerateClub } = useAuth();
 
-  const match = MOCK_MATCHES.find((m) => m.id === id) || MOCK_MATCHES[0];
+  const [match, setMatch] = useState<Match | null>(null);
+  const [events, setEvents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isDelegadoModalVisible, setIsDelegadoModalVisible] = useState(false);
+
+  async function fetchMatchData() {
+    if (!id) return;
+
+    // Buscar jogo com clubes
+    const { data: matchData, error } = await supabase
+      .from('matches')
+      .select(`
+      id,
+      competition,
+      round,
+      home_score,
+      away_score,
+      status,
+      minute,
+      match_date,
+      home_club:clubs!matches_home_club_id_fkey(*),
+      away_club:clubs!matches_away_club_id_fkey(*)
+    `)
+      .eq('id', id)
+      .single();
+
+    if (!error && matchData) {
+      setMatch({
+        id: matchData.id,
+        competition: matchData.competition,
+        round: matchData.round,
+        homeClub: mapClub(Array.isArray(matchData.home_club) ? matchData.home_club[0] : matchData.home_club),
+        awayClub: mapClub(Array.isArray(matchData.away_club) ? matchData.away_club[0] : matchData.away_club),
+        homeScore: matchData.home_score,
+        awayScore: matchData.away_score,
+        status: matchData.status,
+        minute: matchData.minute,
+        matchDate: matchData.match_date,
+      });
+    }
+
+    // Buscar eventos
+    const { data: eventData } = await supabase
+      .from('match_events')
+      .select('*')
+      .eq('match_id', id)
+      .order('minute', { ascending: false });
+
+    if (eventData) {
+      setEvents(eventData);
+    }
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    fetchMatchData();
+
+    // Subscrição em direto aos eventos e placar deste jogo
+    const matchChannel = supabase
+      .channel(`match:${id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'matches', filter: `id=eq.${id}` }, () => fetchMatchData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'match_events', filter: `match_id=eq.${id}` }, () => fetchMatchData())
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(matchChannel);
+    };
+  }, [id]);
+
+  if (loading || !match) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#09090b' : '#f4f4f5', justifyContent: 'center' }]}>
+        <ActivityIndicator size="large" color="#16a34a" />
+      </SafeAreaView>
+    );
+  }
 
   const openGoogleMaps = () => {
     const url = `https://www.google.com/maps/dir/?api=1&destination=${match.homeClub.latitude},${match.homeClub.longitude}`;
@@ -31,29 +124,50 @@ export default function MatchDetailScreen() {
 
           <View style={styles.scoreboard}>
             <View style={styles.teamColumn}>
-              <View style={[styles.badge, { backgroundColor: match.homeClub.primaryColor }]}>
-                <Text style={styles.badgeText}>{match.homeClub.initials}</Text>
-              </View>
+              <ClubBadge club={match.homeClub} size={48} />
               <Text style={[styles.teamName, { color: isDark ? '#f4f4f5' : '#09090b' }]}>{match.homeClub.shortName}</Text>
             </View>
 
             <View style={styles.scoreCenter}>
-              <Text style={[styles.score, { color: isDark ? '#f4f4f5' : '#09090b' }]}>
-                {match.homeScore} - {match.awayScore}
-              </Text>
-              {match.status === 'live' && <Text style={styles.minute}>{match.minute}' Decorridos</Text>}
+              <ScoreboardPlate
+                homeScore={match.homeScore}
+                awayScore={match.awayScore}
+                size="large"
+                status={match.status}
+                minute={match.minute}
+              />
+              {match.status === 'finished' && (
+                <Text style={[styles.statusLabel, { marginTop: 8 }]}>Terminado</Text>
+              )}
             </View>
 
             <View style={styles.teamColumn}>
-              <View style={[styles.badge, { backgroundColor: match.awayClub.primaryColor }]}>
-                <Text style={styles.badgeText}>{match.awayClub.initials}</Text>
-              </View>
+              <ClubBadge club={match.awayClub} size={48} />
               <Text style={[styles.teamName, { color: isDark ? '#f4f4f5' : '#09090b' }]}>{match.awayClub.shortName}</Text>
             </View>
           </View>
         </View>
 
-        {/* Localização & Direções GPS */}
+        {/* Botão de Controlo de Delegado — só visível a quem tem permissão */}
+        {canModerateClub(match.homeClub.id) || canModerateClub(match.awayClub.id) ? (
+          <TouchableOpacity
+            style={styles.delegadoBtn}
+            onPress={() => setIsDelegadoModalVisible(true)}
+          >
+            <Ionicons name="create-outline" size={18} color="#ffffff" />
+            <Text style={styles.delegadoBtnText}>Painel do Delegado (Registar Golo/Tempo)</Text>
+          </TouchableOpacity>
+        ) : !session ? (
+          <TouchableOpacity
+            style={styles.delegadoLoginBtn}
+            onPress={() => router.push('/delegado-login')}
+          >
+            <Ionicons name="lock-closed-outline" size={16} color="#71717a" />
+            <Text style={styles.delegadoLoginBtnText}>Sou delegado deste jogo — iniciar sessão</Text>
+          </TouchableOpacity>
+        ) : null}
+
+        {/* Localização & GPS */}
         <View style={[styles.locationCard, { backgroundColor: isDark ? '#18181b' : '#ffffff' }]}>
           <View style={styles.locationHeader}>
             <Ionicons name="location" size={20} color="#16a34a" />
@@ -75,26 +189,40 @@ export default function MatchDetailScreen() {
           </View>
         </View>
 
-        {/* Match Ticker Simples */}
+        {/* Match Ticker em Tempo Real */}
         <Text style={[styles.tickerTitle, { color: isDark ? '#f4f4f5' : '#09090b' }]}>Acontecimentos</Text>
         <View style={[styles.tickerCard, { backgroundColor: isDark ? '#18181b' : '#ffffff' }]}>
-          <View style={styles.eventRow}>
-            <Text style={styles.eventMinute}>68'</Text>
-            <Text style={styles.eventIcon}>⚽</Text>
-            <Text style={[styles.eventText, { color: isDark ? '#f4f4f5' : '#09090b' }]}>Golo - União de Tomar</Text>
-          </View>
-          <View style={styles.eventRow}>
-            <Text style={styles.eventMinute}>45'</Text>
-            <Text style={styles.eventIcon}>🟨</Text>
-            <Text style={[styles.eventText, { color: isDark ? '#f4f4f5' : '#09090b' }]}>Cartão Amarelo - CD Torres Novas</Text>
-          </View>
-          <View style={styles.eventRow}>
-            <Text style={styles.eventMinute}>12'</Text>
-            <Text style={styles.eventIcon}>⚽</Text>
-            <Text style={[styles.eventText, { color: isDark ? '#f4f4f5' : '#09090b' }]}>Golo - CD Torres Novas</Text>
-          </View>
+          {events.length === 0 ? (
+            <Text style={{ color: '#71717a', textAlign: 'center', paddingVertical: 10 }}>
+              Sem eventos registados até ao momento.
+            </Text>
+          ) : (
+            events.map((evt) => (
+              <View key={evt.id} style={styles.eventRow}>
+                <Text style={styles.eventMinute}>{evt.minute}'</Text>
+                <Text style={styles.eventIcon}>
+                  {evt.event_type === 'GOAL' ? '⚽' : evt.event_type === 'YELLOW_CARD' ? '🟨' : '🔴'}
+                </Text>
+                <Text style={[styles.eventText, { color: isDark ? '#f4f4f5' : '#09090b' }]}>
+                  {evt.event_type === 'GOAL' ? 'Golo' : evt.event_type === 'YELLOW_CARD' ? 'Amarelo' : 'Vermelho'}
+                  {evt.player_name ? ` - ${evt.player_name}` : ''}
+                  {evt.is_penalty ? ' (Penálti)' : ''}
+                </Text>
+              </View>
+            ))
+          )}
         </View>
       </ScrollView>
+
+      {/* Modal de Gestão */}
+      <DelegadoPanelModal
+        visible={isDelegadoModalVisible}
+        match={match}
+        onClose={() => {
+          setIsDelegadoModalVisible(false);
+          fetchMatchData();
+        }}
+      />
     </SafeAreaView>
   );
 }
@@ -102,7 +230,18 @@ export default function MatchDetailScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { padding: 16 },
-  scoreCard: { padding: 20, borderRadius: 16, marginBottom: 16 },
+  scoreCard: {
+  padding: 18,
+  borderRadius: 16,
+  marginBottom: 14,
+  borderWidth: 1,
+  borderColor: 'rgba(255, 255, 255, 0.05)',
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 4 },
+  shadowOpacity: 0.5,
+  shadowRadius: 6,
+  elevation: 4,
+},
   competitionText: { fontSize: 13, textAlign: 'center', marginBottom: 16 },
   scoreboard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   teamColumn: { flex: 1, alignItems: 'center' },
@@ -110,8 +249,33 @@ const styles = StyleSheet.create({
   scoreCenter: { alignItems: 'center', paddingHorizontal: 16 },
   score: { fontSize: 32, fontWeight: '900', letterSpacing: 2 },
   minute: { color: '#dc2626', fontSize: 12, fontWeight: '700', marginTop: 4 },
+  statusLabel: { color: '#71717a', fontSize: 12, fontWeight: '700', marginTop: 4 },
   badge: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
   badgeText: { color: '#fff', fontWeight: 'bold' },
+  delegadoBtn: {
+    backgroundColor: '#16a34a',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 10,
+    marginBottom: 16,
+    gap: 8,
+  },
+  delegadoBtnText: { color: '#ffffff', fontWeight: '700', fontSize: 14 },
+  delegadoLoginBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    borderRadius: 10,
+    marginBottom: 16,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(150,150,150,0.3)',
+    borderStyle: 'dashed',
+  },
+  delegadoLoginBtnText: { color: '#71717a', fontWeight: '600', fontSize: 12 },
   locationCard: { padding: 16, borderRadius: 16, marginBottom: 16 },
   locationHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   stadiumName: { fontSize: 14, fontWeight: '700', marginLeft: 8 },

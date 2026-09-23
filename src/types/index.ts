@@ -9,6 +9,7 @@ export interface Club {
   stadiumName: string;
   latitude: number;
   longitude: number;
+  badgeUrl?: string;
 }
 
 export interface Match {
