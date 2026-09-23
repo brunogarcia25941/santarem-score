@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   useColorScheme,
 } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { supabase } from '@/services/supabase';
 import { useClubs } from '@/hooks/useClubs';
 import { ClubBadge } from '@/components/ClubBadge';
@@ -67,7 +68,7 @@ export default function CompetitionsScreen() {
   }, [selectedDivision]);
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#09090b' : '#f4f4f5' }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1a1b1e' : '#eef0f2' }]}>
       {/* Seletor de Divisões */}
       <View style={styles.selectorContainer}>
         {DIVISIONS.map((div) => {
@@ -77,9 +78,12 @@ export default function CompetitionsScreen() {
               key={div.id}
               style={[
                 styles.tabPill,
-                { backgroundColor: isSelected ? '#16a34a' : isDark ? '#18181b' : '#e4e4e7' },
+                { backgroundColor: isSelected ? '#2f6b4a' : isDark ? '#202226' : '#e2e5e8' },
               ]}
-              onPress={() => setSelectedDivision(div.id)}
+              onPress={() => {
+                Haptics.selectionAsync();
+                setSelectedDivision(div.id);
+              }}
             >
               <Text
                 style={[
@@ -96,7 +100,7 @@ export default function CompetitionsScreen() {
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Cabeçalho da Tabela */}
-        <View style={[styles.tableCard, { backgroundColor: isDark ? '#18181b' : '#ffffff' }]}>
+        <View style={[styles.tableCard, { backgroundColor: isDark ? '#202226' : '#ffffff' }]}>
           <View style={styles.tableHeader}>
             <Text style={[styles.colPos, styles.headerText]}>#</Text>
             <Text style={[styles.colClub, styles.headerText]}>Clube</Text>
@@ -105,11 +109,11 @@ export default function CompetitionsScreen() {
             <Text style={[styles.colStat, styles.headerText]}>E</Text>
             <Text style={[styles.colStat, styles.headerText]}>D</Text>
             <Text style={[styles.colStat, styles.headerText]}>DG</Text>
-            <Text style={[styles.colPoints, styles.headerText, { color: '#16a34a' }]}>PTS</Text>
+            <Text style={[styles.colPoints, styles.headerText, { color: '#2f6b4a' }]}>PTS</Text>
           </View>
 
           {loading ? (
-            <ActivityIndicator size="small" color="#16a34a" style={{ marginVertical: 20 }} />
+            <ActivityIndicator size="small" color="#2f6b4a" style={{ marginVertical: 20 }} />
           ) : standings.length === 0 ? (
             <Text style={styles.emptyText}>Sem jogos registados para esta divisão.</Text>
           ) : (
@@ -118,10 +122,10 @@ export default function CompetitionsScreen() {
                 key={row.club_id}
                 style={[
                   styles.tableRow,
-                  { borderTopColor: isDark ? '#27272a' : '#f4f4f5' },
+                  { borderTopColor: isDark ? '#2c2e33' : '#eef0f2' },
                 ]}
               >
-                <Text style={[styles.colPos, { color: index < 2 ? '#16a34a' : isDark ? '#a1a1aa' : '#71717a', fontWeight: '700' }]}>
+                <Text style={[styles.colPos, { color: index < 2 ? '#2f6b4a' : isDark ? '#a1a1aa' : '#71717a', fontWeight: '700' }]}>
                   {index + 1}
                 </Text>
 
@@ -133,7 +137,7 @@ export default function CompetitionsScreen() {
                       shortName: row.short_name,
                       initials: row.initials,
                       division: selectedDivision as any,
-                      primaryColor: row.primary_color || '#16a34a',
+                      primaryColor: row.primary_color || '#2f6b4a',
                       secondaryColor: '#ffffff',
                       stadiumName: '',
                       latitude: 0,
@@ -142,17 +146,17 @@ export default function CompetitionsScreen() {
                     }}
                     size={22}
                   />
-                  <Text style={[styles.clubName, { color: isDark ? '#f4f4f5' : '#09090b', marginLeft: 8 }]} numberOfLines={1}>
+                  <Text style={[styles.clubName, { color: isDark ? '#eef0f2' : '#1a1b1e', marginLeft: 8 }]} numberOfLines={1}>
                     {row.short_name}
                   </Text>
                 </View>
 
-                <Text style={[styles.colStat, { color: isDark ? '#f4f4f5' : '#09090b' }]}>{row.played}</Text>
+                <Text style={[styles.colStat, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>{row.played}</Text>
                 <Text style={[styles.colStat, { color: isDark ? '#a1a1aa' : '#71717a' }]}>{row.won}</Text>
                 <Text style={[styles.colStat, { color: isDark ? '#a1a1aa' : '#71717a' }]}>{row.drawn}</Text>
                 <Text style={[styles.colStat, { color: isDark ? '#a1a1aa' : '#71717a' }]}>{row.lost}</Text>
                 <Text style={[styles.colStat, { color: isDark ? '#a1a1aa' : '#71717a' }]}>{row.goal_difference}</Text>
-                <Text style={[styles.colPoints, { color: isDark ? '#f4f4f5' : '#09090b', fontWeight: '800' }]}>
+                <Text style={[styles.colPoints, { color: isDark ? '#eef0f2' : '#1a1b1e', fontWeight: '800' }]}>
                   {row.points}
                 </Text>
               </View>

@@ -30,7 +30,7 @@ export function SevenSegmentDigit({
   char,
   size = 28,
   activeColor = '#f59e0b', // Âmbar estádio vintage
-  inactiveColor = 'rgba(245, 158, 11, 0.08)',
+  inactiveColor = '#332714', // "vidro" de LED apagado — visível, não invisível
 }: DigitProps) {
   const pattern = DIGIT_PATTERNS[char] || DIGIT_PATTERNS[' '];
   const width = size * 0.58;
@@ -84,10 +84,14 @@ interface ScoreboardScoreProps {
   score: number | string;
   size?: number;
   color?: string;
+  /** Nº mínimo de dígitos — os placares de estádio reais mostram
+   * sempre "02", nunca só "2". Isto também é o que dá o efeito de
+   * "88 apagado" no fundo mesmo com resultados baixos. */
+  minDigits?: number;
 }
 
-export function LedScoreDisplay({ score, size = 32, color = '#f59e0b' }: ScoreboardScoreProps) {
-  const text = score.toString();
+export function LedScoreDisplay({ score, size = 32, color = '#f59e0b', minDigits = 2 }: ScoreboardScoreProps) {
+  const text = score.toString().padStart(minDigits, '0');
   return (
     <View style={styles.numberRow}>
       {text.split('').map((c, i) => (

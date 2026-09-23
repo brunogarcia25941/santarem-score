@@ -11,6 +11,7 @@ import {
   useColorScheme,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { Match } from '@/types';
 import { submitMatchEvent } from '@/services/matchActions';
 import { supabase } from '@/services/supabase';
@@ -41,6 +42,7 @@ export function DelegadoPanelModal({ visible, match, onClose }: DelegadoPanelMod
       console.error('Erro ao atualizar status:', error);
       Alert.alert('Erro', `Erro: ${error.message}`);
     } else {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       Alert.alert('Sucesso', 'Estado do jogo atualizado.');
     }
   };
@@ -61,9 +63,11 @@ export function DelegadoPanelModal({ visible, match, onClose }: DelegadoPanelMod
       setPlayerName('');
       setIsPenalty(false);
       setIsOwnGoal(false);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert('Golo Registado!', 'O resultado foi atualizado.');
       onClose();
     } catch (err: any) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
       Alert.alert('Aviso', `O golo foi guardado offline ou deu erro: ${err.message || ''}`);
     }
   };
@@ -80,6 +84,7 @@ export function DelegadoPanelModal({ visible, match, onClose }: DelegadoPanelMod
     });
 
     setPlayerName('');
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     Alert.alert('Cartão Registado!', 'O evento foi adicionado ao ticker.');
     onClose();
   };
@@ -87,17 +92,17 @@ export function DelegadoPanelModal({ visible, match, onClose }: DelegadoPanelMod
   return (
     <Modal visible={visible} animationType="slide" transparent>
       <View style={styles.overlay}>
-        <View style={[styles.container, { backgroundColor: isDark ? '#18181b' : '#ffffff' }]}>
+        <View style={[styles.container, { backgroundColor: isDark ? '#202226' : '#ffffff' }]}>
           {/* Header */}
           <View style={styles.header}>
             <View>
-              <Text style={[styles.title, { color: isDark ? '#f4f4f5' : '#09090b' }]}>Painel de Delegado</Text>
+              <Text style={[styles.title, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>Painel de Delegado</Text>
               <Text style={[styles.matchSubtitle, { color: isDark ? '#a1a1aa' : '#71717a' }]}>
                 {match.homeClub.shortName} vs {match.awayClub.shortName}
               </Text>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-              <Ionicons name="close" size={24} color={isDark ? '#f4f4f5' : '#09090b'} />
+              <Ionicons name="close" size={24} color={isDark ? '#eef0f2' : '#1a1b1e'} />
             </TouchableOpacity>
           </View>
 
@@ -105,19 +110,28 @@ export function DelegadoPanelModal({ visible, match, onClose }: DelegadoPanelMod
           <View style={styles.tabRow}>
             <TouchableOpacity
               style={[styles.tabBtn, activeTab === 'goal' && styles.tabBtnActive]}
-              onPress={() => setActiveTab('goal')}
+              onPress={() => {
+                Haptics.selectionAsync();
+                setActiveTab('goal');
+              }}
             >
               <Text style={[styles.tabBtnText, activeTab === 'goal' && styles.tabBtnTextActive]}>⚽ Registar Golo</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.tabBtn, activeTab === 'status' && styles.tabBtnActive]}
-              onPress={() => setActiveTab('status')}
+              onPress={() => {
+                Haptics.selectionAsync();
+                setActiveTab('status');
+              }}
             >
               <Text style={[styles.tabBtnText, activeTab === 'status' && styles.tabBtnTextActive]}>⏱️ Período</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.tabBtn, activeTab === 'card' && styles.tabBtnActive]}
-              onPress={() => setActiveTab('card')}
+              onPress={() => {
+                Haptics.selectionAsync();
+                setActiveTab('card');
+              }}
             >
               <Text style={[styles.tabBtnText, activeTab === 'card' && styles.tabBtnTextActive]}>🟨 Disciplina</Text>
             </TouchableOpacity>
@@ -131,11 +145,11 @@ export function DelegadoPanelModal({ visible, match, onClose }: DelegadoPanelMod
                 <TouchableOpacity
                   style={[
                     styles.clubChoiceBtn,
-                    selectedClubId === match.homeClub.id && { borderColor: '#16a34a', backgroundColor: 'rgba(22,163,74,0.1)' },
+                    selectedClubId === match.homeClub.id && { borderColor: '#2f6b4a', backgroundColor: 'rgba(47,107,74,0.1)' },
                   ]}
                   onPress={() => setSelectedClubId(match.homeClub.id)}
                 >
-                  <Text style={[styles.clubChoiceText, { color: isDark ? '#f4f4f5' : '#09090b' }]}>
+                  <Text style={[styles.clubChoiceText, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>
                     {match.homeClub.shortName}
                   </Text>
                 </TouchableOpacity>
@@ -143,11 +157,11 @@ export function DelegadoPanelModal({ visible, match, onClose }: DelegadoPanelMod
                 <TouchableOpacity
                   style={[
                     styles.clubChoiceBtn,
-                    selectedClubId === match.awayClub.id && { borderColor: '#16a34a', backgroundColor: 'rgba(22,163,74,0.1)' },
+                    selectedClubId === match.awayClub.id && { borderColor: '#2f6b4a', backgroundColor: 'rgba(47,107,74,0.1)' },
                   ]}
                   onPress={() => setSelectedClubId(match.awayClub.id)}
                 >
-                  <Text style={[styles.clubChoiceText, { color: isDark ? '#f4f4f5' : '#09090b' }]}>
+                  <Text style={[styles.clubChoiceText, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>
                     {match.awayClub.shortName}
                   </Text>
                 </TouchableOpacity>
@@ -167,12 +181,12 @@ export function DelegadoPanelModal({ visible, match, onClose }: DelegadoPanelMod
               )}
 
               <View style={styles.switchRow}>
-                <Text style={[styles.switchLabel, { color: isDark ? '#f4f4f5' : '#09090b' }]}>Grande Penalidade (Penálti)</Text>
+                <Text style={[styles.switchLabel, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>Grande Penalidade (Penálti)</Text>
                 <Switch value={isPenalty} onValueChange={setIsPenalty} disabled={isOwnGoal} />
               </View>
 
               <View style={styles.switchRow}>
-                <Text style={[styles.switchLabel, { color: isDark ? '#f4f4f5' : '#09090b' }]}>Autogolo</Text>
+                <Text style={[styles.switchLabel, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>Autogolo</Text>
                 <Switch
                   value={isOwnGoal}
                   onValueChange={(val) => {
@@ -192,7 +206,7 @@ export function DelegadoPanelModal({ visible, match, onClose }: DelegadoPanelMod
           {activeTab === 'status' && (
             <View style={styles.body}>
               <TouchableOpacity
-                style={[styles.periodBtn, { backgroundColor: '#16a34a' }]}
+                style={[styles.periodBtn, { backgroundColor: '#2f6b4a' }]}
                 onPress={() => handleUpdateStatus('live', 1)}
               >
                 <Text style={styles.periodBtnText}>Iniciar 1.ª Parte</Text>
@@ -206,7 +220,7 @@ export function DelegadoPanelModal({ visible, match, onClose }: DelegadoPanelMod
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.periodBtn, { backgroundColor: '#16a34a' }]}
+                style={[styles.periodBtn, { backgroundColor: '#2f6b4a' }]}
                 onPress={() => handleUpdateStatus('live', 46)}
               >
                 <Text style={styles.periodBtnText}>Iniciar 2.ª Parte</Text>
@@ -229,11 +243,11 @@ export function DelegadoPanelModal({ visible, match, onClose }: DelegadoPanelMod
                 <TouchableOpacity
                   style={[
                     styles.clubChoiceBtn,
-                    selectedClubId === match.homeClub.id && { borderColor: '#16a34a', backgroundColor: 'rgba(22,163,74,0.1)' },
+                    selectedClubId === match.homeClub.id && { borderColor: '#2f6b4a', backgroundColor: 'rgba(47,107,74,0.1)' },
                   ]}
                   onPress={() => setSelectedClubId(match.homeClub.id)}
                 >
-                  <Text style={[styles.clubChoiceText, { color: isDark ? '#f4f4f5' : '#09090b' }]}>
+                  <Text style={[styles.clubChoiceText, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>
                     {match.homeClub.shortName}
                   </Text>
                 </TouchableOpacity>
@@ -241,11 +255,11 @@ export function DelegadoPanelModal({ visible, match, onClose }: DelegadoPanelMod
                 <TouchableOpacity
                   style={[
                     styles.clubChoiceBtn,
-                    selectedClubId === match.awayClub.id && { borderColor: '#16a34a', backgroundColor: 'rgba(22,163,74,0.1)' },
+                    selectedClubId === match.awayClub.id && { borderColor: '#2f6b4a', backgroundColor: 'rgba(47,107,74,0.1)' },
                   ]}
                   onPress={() => setSelectedClubId(match.awayClub.id)}
                 >
-                  <Text style={[styles.clubChoiceText, { color: isDark ? '#f4f4f5' : '#09090b' }]}>
+                  <Text style={[styles.clubChoiceText, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>
                     {match.awayClub.shortName}
                   </Text>
                 </TouchableOpacity>
@@ -294,7 +308,7 @@ const styles = StyleSheet.create({
   closeBtn: { padding: 4 },
   tabRow: { flexDirection: 'row', marginBottom: 20, gap: 8 },
   tabBtn: { flex: 1, paddingVertical: 10, borderRadius: 8, alignItems: 'center', backgroundColor: 'rgba(150,150,150,0.1)' },
-  tabBtnActive: { backgroundColor: '#16a34a' },
+  tabBtnActive: { backgroundColor: '#2f6b4a' },
   tabBtnText: { fontSize: 12, fontWeight: '600', color: '#71717a' },
   tabBtnTextActive: { color: '#ffffff' },
   body: { gap: 14 },
@@ -306,7 +320,7 @@ const styles = StyleSheet.create({
   input: { borderWidth: 1, borderRadius: 8, paddingHorizontal: 12, height: 44, fontSize: 14 },
   switchRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 4 },
   switchLabel: { fontSize: 14, fontWeight: '500' },
-  actionBtnPrimary: { backgroundColor: '#16a34a', height: 48, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginTop: 10 },
+  actionBtnPrimary: { backgroundColor: '#2f6b4a', height: 48, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginTop: 10 },
   actionBtnPrimaryText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   periodBtn: { height: 46, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   periodBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },

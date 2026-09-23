@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { useClubs } from '@/hooks/useClubs';
 import { useFavorites } from '@/context/FavoritesContext';
@@ -28,9 +29,9 @@ export default function SelectClubsScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#09090b' : '#f4f4f5' }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1a1b1e' : '#eef0f2' }]}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: isDark ? '#f4f4f5' : '#09090b' }]}>
+        <Text style={[styles.title, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>
           Santarém Score
         </Text>
         <Text style={[styles.subtitle, { color: isDark ? '#a1a1aa' : '#52525b' }]}>
@@ -39,7 +40,7 @@ export default function SelectClubsScreen() {
       </View>
 
       {loading ? (
-        <ActivityIndicator size="large" color="#16a34a" style={{ marginTop: 40 }} />
+        <ActivityIndicator size="large" color="#2f6b4a" style={{ marginTop: 40 }} />
       ) : error ? (
         <View style={styles.errorBox}>
           <Text style={styles.errorText}>Não foi possível carregar os clubes.</Text>
@@ -60,16 +61,19 @@ export default function SelectClubsScreen() {
                 style={[
                   styles.clubCard,
                   {
-                    backgroundColor: isDark ? '#18181b' : '#ffffff',
-                    borderColor: selected ? '#16a34a' : isDark ? '#27272a' : '#e4e4e7',
+                    backgroundColor: isDark ? '#202226' : '#ffffff',
+                    borderColor: selected ? '#2f6b4a' : isDark ? '#2c2e33' : '#e2e5e8',
                   },
                 ]}
-                onPress={() => toggleFavorite(item.id)}
+                onPress={() => {
+                  Haptics.selectionAsync();
+                  toggleFavorite(item.id);
+                }}
               >
                 <ClubBadge club={item} size={44} />
 
                 <View style={styles.clubInfo}>
-                  <Text style={[styles.clubName, { color: isDark ? '#f4f4f5' : '#09090b' }]}>
+                  <Text style={[styles.clubName, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>
                     {item.shortName}
                   </Text>
                   <Text style={[styles.stadium, { color: isDark ? '#71717a' : '#71717a' }]}>
@@ -81,7 +85,7 @@ export default function SelectClubsScreen() {
                   style={[
                     styles.checkbox,
                     selected && styles.checkboxActive,
-                    { borderColor: selected ? '#16a34a' : isDark ? '#3f3f46' : '#d4d4d8' },
+                    { borderColor: selected ? '#2f6b4a' : isDark ? '#3f3f46' : '#d4d4d8' },
                   ]}
                 >
                   {selected && <Ionicons name="checkmark" size={16} color="#ffffff" />}
@@ -92,11 +96,11 @@ export default function SelectClubsScreen() {
         />
       )}
 
-      <View style={[styles.footer, { backgroundColor: isDark ? '#09090b' : '#f4f4f5' }]}>
+      <View style={[styles.footer, { backgroundColor: isDark ? '#1a1b1e' : '#eef0f2' }]}>
         <TouchableOpacity
           style={[
             styles.continueButton,
-            { backgroundColor: favoriteClubIds.length > 0 ? '#16a34a' : '#71717a' },
+            { backgroundColor: favoriteClubIds.length > 0 ? '#2f6b4a' : '#71717a' },
           ]}
           onPress={handleContinue}
         >
@@ -136,7 +140,7 @@ const styles = StyleSheet.create({
   },
   errorBox: { alignItems: 'center', marginTop: 40, paddingHorizontal: 20 },
   errorText: { color: '#71717a', fontSize: 14, textAlign: 'center', marginBottom: 12 },
-  retryBtn: { backgroundColor: '#16a34a', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8 },
+  retryBtn: { backgroundColor: '#2f6b4a', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8 },
   retryBtnText: { color: '#ffffff', fontWeight: '700' },
   clubCard: {
     flexDirection: 'row',
@@ -167,7 +171,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   checkboxActive: {
-    backgroundColor: '#16a34a',
+    backgroundColor: '#2f6b4a',
   },
   footer: {
     position: 'absolute',

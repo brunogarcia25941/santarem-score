@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated, useColorScheme } from 'react-native';
 import { LedScoreDisplay, SevenSegmentDigit } from './SegmentDisplay';
+import { brand } from '@/constants/theme';
 
 interface ScoreboardPlateProps {
   homeScore: number;
@@ -51,6 +52,9 @@ export function ScoreboardPlate({
         },
       ]}
     >
+      {/* Sombra de cavidade no topo — reforça a sensação de ecrã embutido */}
+      <View style={styles.insetShadowTop} pointerEvents="none" />
+
       {/* 4 Parafusos / Rebites industriais nos cantos */}
       <View style={[styles.bolt, styles.boltTL]} />
       <View style={[styles.bolt, styles.boltTR]} />
@@ -62,7 +66,7 @@ export function ScoreboardPlate({
 
       {/* Miolo do Marcador LED */}
       <View style={styles.digitsContainer}>
-        <LedScoreDisplay score={homeScore} size={digitSize} color="#f59e0b" />
+        <LedScoreDisplay score={homeScore} size={digitSize} color={brand.amber} />
 
         {/* Separador de LEDs estilo estádio */}
         <View style={styles.colonContainer}>
@@ -70,7 +74,7 @@ export function ScoreboardPlate({
           <View style={[styles.colonDot, { width: digitSize * 0.12, height: digitSize * 0.12, marginTop: digitSize * 0.24 }]} />
         </View>
 
-        <LedScoreDisplay score={awayScore} size={digitSize} color="#f59e0b" />
+        <LedScoreDisplay score={awayScore} size={digitSize} color={brand.amber} />
       </View>
 
       {/* Sub-painel embutido para o tempo de jogo (Cronómetro Digital) */}
@@ -78,16 +82,16 @@ export function ScoreboardPlate({
         <View style={styles.timerSubPlate}>
           <Animated.View style={[styles.pilotLight, { opacity: blinkAnim }]} />
           <View style={styles.minuteDigitsRow}>
-            {minute.toString().split('').map((char, idx) => (
+            {minute.toString().padStart(2, '0').split('').map((char, idx) => (
               <SevenSegmentDigit
                 key={idx}
                 char={char}
                 size={isLarge ? 16 : 13}
-                activeColor="#22c55e"
-                inactiveColor="rgba(34, 197, 94, 0.08)"
+                activeColor={brand.amber}
+                inactiveColor="#332714"
               />
             ))}
-            <Text style={[styles.minuteSymbol, { fontSize: isLarge ? 12 : 10 }]}>'</Text>
+            <Text style={[styles.minuteSymbol, { color: brand.amber }]}>'</Text>
           </View>
         </View>
       )}
@@ -139,7 +143,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   colonDot: {
-    backgroundColor: '#f59e0b',
+    backgroundColor: brand.amber,
     borderRadius: 1,
     opacity: 0.9,
   },
@@ -169,6 +173,16 @@ const styles = StyleSheet.create({
     transform: [{ skewY: '-6deg' }],
     zIndex: 1,
   },
+  // Sombra que simula o corte/cavidade onde o visor está embutido
+  insetShadowTop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 5,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    zIndex: 1,
+  },
   // Sub-painel cronómetro
   timerSubPlate: {
     marginTop: 4,
@@ -188,20 +202,20 @@ const styles = StyleSheet.create({
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#22c55e',
+    backgroundColor: brand.red,
   },
   minuteDigitsRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   minuteSymbol: {
-    color: '#22c55e',
     fontWeight: '800',
     marginLeft: 1,
     lineHeight: 12,
+    fontSize: 11,
   },
   stateText: {
-    color: '#f59e0b',
+    color: brand.amber,
     fontSize: 9,
     fontWeight: '900',
     letterSpacing: 0.5,

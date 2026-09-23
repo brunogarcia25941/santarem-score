@@ -41,10 +41,10 @@ export default function DelegadoLoginScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#09090b' : '#f4f4f5' }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1a1b1e' : '#eef0f2' }]}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
         <View style={styles.content}>
-          <Text style={[styles.title, { color: isDark ? '#f4f4f5' : '#09090b' }]}>Área de Delegados</Text>
+          <Text style={[styles.title, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>Área de Delegados</Text>
           <Text style={[styles.subtitle, { color: isDark ? '#a1a1aa' : '#71717a' }]}>
             Entra com a conta que a equipa técnica te criou. Sem conta? Contacta-nos para obteres acesso.
           </Text>
@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
   },
   errorText: { color: '#dc2626', fontSize: 13, marginBottom: 12 },
   loginBtn: {
-    backgroundColor: '#16a34a',
+    backgroundColor: '#2f6b4a',
     height: 50,
     borderRadius: 10,
     alignItems: 'center',

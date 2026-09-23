@@ -7,10 +7,10 @@ export default function TabLayout() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
-  const tintColor = '#16a34a'; // Verde distrital padrão
+  const tintColor = '#2f6b4a'; // Verde distrital padrão
   const inactiveColor = isDark ? '#71717a' : '#a1a1aa';
   const bgColor = isDark ? '#121214' : '#ffffff';
-  const borderColor = isDark ? '#27272a' : '#e4e4e7';
+  const borderColor = isDark ? '#2c2e33' : '#e2e5e8';
 
   return (
     <Tabs
@@ -34,7 +34,7 @@ export default function TabLayout() {
         },
         headerTitleStyle: {
           fontWeight: 'bold',
-          color: isDark ? '#f4f4f5' : '#09090b',
+          color: isDark ? '#eef0f2' : '#1a1b1e',
         },
       }}
     >

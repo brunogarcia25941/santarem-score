@@ -32,15 +32,15 @@ export default function ProfileScreen() {
   const roleLabel = profile ? ROLE_LABEL[profile.role] || 'Utilizador Geral' : 'Utilizador Geral';
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#09090b' : '#f4f4f5' }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1a1b1e' : '#eef0f2' }]}>
       <ScrollView contentContainerStyle={styles.content}>
         {/* Cabeçalho do Perfil */}
-        <View style={[styles.card, { backgroundColor: isDark ? '#18181b' : '#ffffff' }]}>
+        <View style={[styles.card, { backgroundColor: isDark ? '#202226' : '#ffffff' }]}>
           <View style={styles.avatar}>
             <Ionicons name="person" size={28} color="#ffffff" />
           </View>
           <View style={styles.userInfo}>
-            <Text style={[styles.userName, { color: isDark ? '#f4f4f5' : '#09090b' }]}>
+            <Text style={[styles.userName, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>
               {isDelegate ? session!.user.email : 'Adepto Ribatejano'}
             </Text>
             <Text style={styles.userRole}>{isDelegate ? roleLabel : 'Utilizador Geral'}</Text>
@@ -48,11 +48,11 @@ export default function ProfileScreen() {
         </View>
 
         {/* Notificações */}
-        <Text style={[styles.sectionTitle, { color: isDark ? '#f4f4f5' : '#09090b' }]}>Notificações Push</Text>
-        <View style={[styles.card, { backgroundColor: isDark ? '#18181b' : '#ffffff' }]}>
+        <Text style={[styles.sectionTitle, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>Notificações Push</Text>
+        <View style={[styles.card, { backgroundColor: isDark ? '#202226' : '#ffffff' }]}>
           <View style={styles.settingRow}>
             <View style={styles.settingText}>
-              <Text style={[styles.settingLabel, { color: isDark ? '#f4f4f5' : '#09090b' }]}>Golos em Direto</Text>
+              <Text style={[styles.settingLabel, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>Golos em Direto</Text>
               <Text style={styles.settingSub}>Notificar sempre que houver golo nos favoritos</Text>
             </View>
             <Switch value={liveGoalNotifs} onValueChange={setLiveGoalNotifs} />
@@ -62,7 +62,7 @@ export default function ProfileScreen() {
 
           <View style={styles.settingRow}>
             <View style={styles.settingText}>
-              <Text style={[styles.settingLabel, { color: isDark ? '#f4f4f5' : '#09090b' }]}>Início de Jogo</Text>
+              <Text style={[styles.settingLabel, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>Início de Jogo</Text>
               <Text style={styles.settingSub}>Avisar 15 minutos antes do apito inicial</Text>
             </View>
             <Switch value={matchStartNotifs} onValueChange={setMatchStartNotifs} />
@@ -72,7 +72,7 @@ export default function ProfileScreen() {
 
           <View style={styles.settingRow}>
             <View style={styles.settingText}>
-              <Text style={[styles.settingLabel, { color: isDark ? '#f4f4f5' : '#09090b' }]}>Resultado Final</Text>
+              <Text style={[styles.settingLabel, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>Resultado Final</Text>
               <Text style={styles.settingSub}>Resumo no encerramento da partida</Text>
             </View>
             <Switch value={finalScoreNotifs} onValueChange={setFinalScoreNotifs} />
@@ -83,14 +83,14 @@ export default function ProfileScreen() {
         </View>
 
         {/* Preferências & Gestão */}
-        <Text style={[styles.sectionTitle, { color: isDark ? '#f4f4f5' : '#09090b' }]}>Gestão</Text>
-        <View style={[styles.card, { backgroundColor: isDark ? '#18181b' : '#ffffff' }]}>
+        <Text style={[styles.sectionTitle, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>Gestão</Text>
+        <View style={[styles.card, { backgroundColor: isDark ? '#202226' : '#ffffff' }]}>
           <TouchableOpacity
             style={styles.actionRow}
             onPress={() => router.push('/(onboarding)/select-clubs')}
           >
-            <Ionicons name="star-outline" size={20} color="#16a34a" />
-            <Text style={[styles.actionRowText, { color: isDark ? '#f4f4f5' : '#09090b' }]}>
+            <Ionicons name="star-outline" size={20} color="#2f6b4a" />
+            <Text style={[styles.actionRowText, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>
               Gerir Clubes Favoritos
             </Text>
             <Ionicons name="chevron-forward" size={18} color="#71717a" />
@@ -106,8 +106,8 @@ export default function ProfileScreen() {
             </TouchableOpacity>
           ) : (
             <TouchableOpacity style={styles.actionRow} onPress={() => router.push('/delegado-login')}>
-              <Ionicons name="shield-checkmark-outline" size={20} color="#16a34a" />
-              <Text style={[styles.actionRowText, { color: isDark ? '#f4f4f5' : '#09090b' }]}>
+              <Ionicons name="shield-checkmark-outline" size={20} color="#2f6b4a" />
+              <Text style={[styles.actionRowText, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>
                 Área Reservada de Delegados
               </Text>
               <Ionicons name="chevron-forward" size={18} color="#71717a" />
@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { padding: 16 },
   card: { borderRadius: 14, padding: 16, marginBottom: 20 },
-  avatar: { width: 50, height: 50, borderRadius: 25, backgroundColor: '#16a34a', alignItems: 'center', justifyContent: 'center' },
+  avatar: { width: 50, height: 50, borderRadius: 25, backgroundColor: '#2f6b4a', alignItems: 'center', justifyContent: 'center' },
   userInfo: { marginLeft: 14, justifyContent: 'center', flex: 1 },
   userName: { fontSize: 16, fontWeight: '700' },
   userRole: { fontSize: 12, color: '#71717a', marginTop: 2 },
