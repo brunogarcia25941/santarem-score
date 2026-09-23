@@ -20,7 +20,7 @@ export function ScoreboardPlate({
 }: ScoreboardPlateProps) {
   const isDark = useColorScheme() === 'dark';
   const isLarge = size === 'large';
-  const digitSize = isLarge ? 52 : 28;
+  const digitSize = isLarge ? 52 : 22;
   const isLive = status === 'live';
 
   // Piscar suave da luz de tempo em direto (pulsação a cada 1 segundo)
@@ -120,10 +120,10 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   frameSmall: {
-    paddingHorizontal: 8,
-    paddingTop: 6,
-    paddingBottom: 5,
-    minWidth: 92,
+    paddingHorizontal: 6,
+    paddingTop: 4,
+    paddingBottom: 3,
+    minWidth: 74,
   },
   frameLarge: {
     paddingHorizontal: 20,
@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
   colonContainer: {
-    marginHorizontal: 5,
+    marginHorizontal: 4,
     alignItems: 'center',
     justifyContent: 'center',
   },
