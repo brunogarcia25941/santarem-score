@@ -11,12 +11,18 @@ export default function TabLayout() {
   const inactiveColor = isDark ? '#71717a' : '#a1a1aa';
   const bgColor = isDark ? '#121214' : '#ffffff';
   const borderColor = isDark ? '#2c2e33' : '#e2e5e8';
+  const sceneBg = isDark ? '#1a1b1e' : '#eef0f2';
 
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: tintColor,
         tabBarInactiveTintColor: inactiveColor,
+        // O separador de abas em si (por baixo de cada ecrã) tinha fundo
+        // branco por omissão — era isso que "piscava" ao voltar atrás de
+        // um jogo ou da seleção de clubes, antes do ecrã de baixo pintar
+        // por cima com a sua própria cor.
+        sceneStyle: { backgroundColor: sceneBg },
         tabBarStyle: {
           backgroundColor: bgColor,
           borderTopColor: borderColor,
