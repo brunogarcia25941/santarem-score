@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  SafeAreaView,
   FlatList,
   Dimensions,
   TouchableOpacity,
@@ -13,9 +12,11 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useFavorites } from '@/context/FavoritesContext';
-import { SANTARÉM_CLUBS } from '@/constants/clubs';
+import { useClubs } from '@/hooks/useClubs';
 import { useLiveMatches } from '@/hooks/useLiveMatches';
 import { MatchCard } from '@/components/MatchCard';
+import { ClubBadge } from '@/components/ClubBadge';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 
@@ -31,6 +32,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const isDark = useColorScheme() === 'dark';
   const { favoriteClubIds, isOnboardingCompleted } = useFavorites();
+  const { clubs } = useClubs();
   const { matches, loading } = useLiveMatches();
   const [selectedComp, setSelectedComp] = useState('Todas');
   const [activeCardIndex, setActiveCardIndex] = useState(0);
@@ -41,7 +43,7 @@ export default function HomeScreen() {
     }
   }, [isOnboardingCompleted]);
 
-  const favoriteClubs = SANTARÉM_CLUBS.filter((c) => favoriteClubIds.includes(c.id));
+  const favoriteClubs = clubs.filter((c) => favoriteClubIds.includes(c.id));
 
   const filteredMatches = matches.filter((m) => {
     if (selectedComp === 'Todas') return true;
@@ -78,9 +80,7 @@ export default function HomeScreen() {
                   ]}
                 >
                   <View style={styles.cardHeader}>
-                    <View style={[styles.badge, { backgroundColor: item.primaryColor }]}>
-                      <Text style={styles.badgeText}>{item.initials}</Text>
-                    </View>
+                    <ClubBadge club={item} size={40} />
                     <View style={styles.cardHeaderText}>
                       <Text style={[styles.clubTitle, { color: isDark ? '#f4f4f5' : '#09090b' }]}>
                         {item.shortName}
@@ -88,21 +88,6 @@ export default function HomeScreen() {
                       <Text style={[styles.divisionLabel, { color: isDark ? '#a1a1aa' : '#71717a' }]}>
                         AF Santarém • {item.division === '1_divisao' ? '1.ª Divisão' : '2.ª Divisão'}
                       </Text>
-                    </View>
-                    <View style={styles.positionBadge}>
-                      <Text style={styles.positionNumber}>3.º</Text>
-                      <Text style={styles.positionText}>Lugar</Text>
-                    </View>
-                  </View>
-
-                  <View style={styles.cardStatsRow}>
-                    <View style={styles.statBox}>
-                      <Text style={[styles.statLabel, { color: isDark ? '#71717a' : '#a1a1aa' }]}>Último Jogo</Text>
-                      <Text style={[styles.statValue, { color: isDark ? '#f4f4f5' : '#09090b' }]}>V 2 - 1</Text>
-                    </View>
-                    <View style={styles.statBox}>
-                      <Text style={[styles.statLabel, { color: isDark ? '#71717a' : '#a1a1aa' }]}>Próximo Jogo</Text>
-                      <Text style={[styles.statValue, { color: isDark ? '#f4f4f5' : '#09090b' }]}>Dom 15:00 (F)</Text>
                     </View>
                   </View>
                 </View>
@@ -181,30 +166,9 @@ const styles = StyleSheet.create({
   carouselContainer: { marginTop: 12, paddingHorizontal: 16 },
   favoriteCard: { padding: 16, borderRadius: 16, borderWidth: 1, marginRight: 16 },
   cardHeader: { flexDirection: 'row', alignItems: 'center' },
-  badge: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
-  badgeText: { color: '#fff', fontWeight: 'bold', fontSize: 12 },
   cardHeaderText: { flex: 1, marginLeft: 12 },
   clubTitle: { fontSize: 16, fontWeight: '700' },
   divisionLabel: { fontSize: 12, marginTop: 2 },
-  positionBadge: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(22, 163, 74, 0.1)',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  positionNumber: { color: '#16a34a', fontSize: 16, fontWeight: '800' },
-  positionText: { color: '#16a34a', fontSize: 10, fontWeight: '600' },
-  cardStatsRow: {
-    flexDirection: 'row',
-    marginTop: 16,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(150, 150, 150, 0.1)',
-  },
-  statBox: { flex: 1 },
-  statLabel: { fontSize: 11, fontWeight: '500' },
-  statValue: { fontSize: 14, fontWeight: '700', marginTop: 2 },
   paginationDots: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 10 },
   dot: { width: 6, height: 6, borderRadius: 3, marginHorizontal: 3 },
   activeDot: { width: 14 },
