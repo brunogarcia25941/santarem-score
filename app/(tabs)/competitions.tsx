@@ -41,9 +41,14 @@ const DIVISIONS = [
 export default function CompetitionsScreen() {
   const isDark = useColorScheme() === 'dark';
   const [selectedDivision, setSelectedDivision] = useState('1_divisao');
-  const [standings, setStandings] = useState<StandingRow[]>([]);
+  // Classificações das 3 divisões já todas em memória — trocar de divisão
+  // (por toque ou por arrastar o dedo) fica instantâneo, sem esperar por
+  // um novo pedido ao Supabase a meio do gesto.
+  const [standingsByDivision, setStandingsByDivision] = useState<Record<string, StandingRow[]>>({});
   const [loading, setLoading] = useState(true);
   const { clubs } = useClubs();
+
+  const standings = standingsByDivision[selectedDivision] ?? [];
 
   // Arrastar o dedo sobre a tabela percorre as divisões, de forma
   // circular, sem precisar de tocar nos separadores.
@@ -65,22 +70,24 @@ export default function CompetitionsScreen() {
     return map;
   }, [clubs]);
 
-  async function fetchStandings() {
+  async function fetchAllStandings() {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('standings')
-      .select('*')
-      .eq('division', selectedDivision);
-
-    if (!error && data) {
-      setStandings(data);
-    }
+    const results = await Promise.all(
+      DIVISIONS.map((div) =>
+        supabase
+          .from('standings')
+          .select('*')
+          .eq('division', div.id)
+          .then(({ data, error }) => [div.id, !error && data ? data : []] as const)
+      )
+    );
+    setStandingsByDivision(Object.fromEntries(results));
     setLoading(false);
   }
 
   useEffect(() => {
-    fetchStandings();
-  }, [selectedDivision]);
+    fetchAllStandings();
+  }, []);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1a1b1e' : '#eef0f2' }]}>

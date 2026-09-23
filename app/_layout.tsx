@@ -134,11 +134,14 @@ export default function RootLayout() {
               ...headerOptions,
               presentation: 'card',
               title: 'Detalhes do Jogo',
-              // Sem deslize lateral nativo: esse movimento competia com a
-              // animação FLIP do placar/emblemas e desfazia o efeito.
-              // O gesto nativo de voltar atrás (swipe-back) mantém-se.
-              animation: 'fade',
-              animationDuration: 180,
+              // Sem animação nativa de transição: o "fade" do próprio
+              // react-native-screens estava a mostrar um flash branco por
+              // trás durante a dissolução, e também competia com a
+              // animação FLIP do placar/emblemas. O gesto nativo de voltar
+              // atrás (swipe-back) mantém-se — só a animação de entrada é
+              // que passa a ser inteiramente a nossa (FLIP).
+              animation: 'none',
+              freezeOnBlur: true,
             }}
           />
           <Stack.Screen
