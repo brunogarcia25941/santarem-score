@@ -33,7 +33,7 @@ export function MatchCard({ match }: MatchCardProps) {
       measureView(homeBadgeRef),
       measureView(awayBadgeRef),
     ]);
-    setMatchTransitionOrigin({ scoreboard, homeBadge, awayBadge });
+    setMatchTransitionOrigin({ scoreboard, homeBadge, awayBadge, initialMatch: match });
 
     router.push(`/match/${match.id}`);
   };
