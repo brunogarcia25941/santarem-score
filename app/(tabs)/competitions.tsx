@@ -13,6 +13,9 @@ import { supabase } from '@/services/supabase';
 import { useClubs } from '@/hooks/useClubs';
 import { ClubBadge } from '@/components/ClubBadge';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { GestureDetector } from 'react-native-gesture-handler';
+import Animated from 'react-native-reanimated';
+import { useSwipeableTabs } from '@/hooks/useSwipeableTabs';
 
 interface StandingRow {
   club_id: string;
@@ -41,6 +44,18 @@ export default function CompetitionsScreen() {
   const [standings, setStandings] = useState<StandingRow[]>([]);
   const [loading, setLoading] = useState(true);
   const { clubs } = useClubs();
+
+  // Arrastar o dedo sobre a tabela percorre as divisões, de forma
+  // circular, sem precisar de tocar nos separadores.
+  const selectedDivisionIndex = DIVISIONS.findIndex((d) => d.id === selectedDivision);
+  const { panGesture, animatedStyle } = useSwipeableTabs({
+    length: DIVISIONS.length,
+    currentIndex: selectedDivisionIndex === -1 ? 0 : selectedDivisionIndex,
+    onChangeIndex: (index) => {
+      Haptics.selectionAsync();
+      setSelectedDivision(DIVISIONS[index].id);
+    },
+  });
 
   const badgeById = useMemo(() => {
     const map: Record<string, string | undefined> = {};
@@ -99,7 +114,9 @@ export default function CompetitionsScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Cabeçalho da Tabela */}
+        {/* Tabela — arrastável para o lado para percorrer as divisões */}
+        <GestureDetector gesture={panGesture}>
+        <Animated.View style={animatedStyle}>
         <View style={[styles.tableCard, { backgroundColor: isDark ? '#202226' : '#ffffff' }]}>
           <View style={styles.tableHeader}>
             <Text style={[styles.colPos, styles.headerText]}>#</Text>
@@ -163,6 +180,8 @@ export default function CompetitionsScreen() {
             ))
           )}
         </View>
+        </Animated.View>
+        </GestureDetector>
       </ScrollView>
     </SafeAreaView>
   );
