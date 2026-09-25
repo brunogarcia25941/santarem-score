@@ -18,6 +18,7 @@ import { Match } from '@/types';
 import { ClubBadge } from '@/components/ClubBadge';
 import { useAuth } from '@/context/AuthContext';
 import { DelegadoPanelModal } from '@/components/DelegadoPanelModal';
+import { RegisterResultModal } from '@/components/RegisterResultModal';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StadiumTexture } from '@/components/StadiumTexture';
 import { ScoreboardPlate } from '@/components/ScoreboardPlate';
@@ -28,13 +29,15 @@ export default function MatchDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const isDark = useColorScheme() === 'dark';
   const router = useRouter();
-  const { session, canModerateClub } = useAuth();
+  const { session, profile, canModerateClub } = useAuth();
+  const isAdmin = profile?.role === 'admin';
 
   const [transitionOrigin] = useState(() => consumeMatchTransitionOrigin());
   const [match, setMatch] = useState<Match | null>(transitionOrigin?.initialMatch ?? null);
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(!transitionOrigin?.initialMatch);
   const [isDelegadoModalVisible, setIsDelegadoModalVisible] = useState(false);
+  const [isResultModalVisible, setIsResultModalVisible] = useState(false);
 
   async function fetchMatchData() {
     if (!id) return;
@@ -194,6 +197,22 @@ export default function MatchDetailScreen() {
           </TouchableOpacity>
         ) : null}
 
+        {/* Registo retroativo de jogos já realizados — só admin */}
+        {isAdmin && (
+          <TouchableOpacity
+            style={[styles.delegadoBtn, { backgroundColor: '#d97706' }]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setIsResultModalVisible(true);
+            }}
+          >
+            <Ionicons name="checkmark-done-outline" size={18} color="#ffffff" />
+            <Text style={styles.delegadoBtnText}>
+              {match.status === 'finished' ? 'Corrigir resultado (Admin)' : 'Registar resultado (Admin)'}
+            </Text>
+          </TouchableOpacity>
+        )}
+
         {/* Localização & GPS */}
         <View style={[styles.locationCard, { backgroundColor: isDark ? '#202226' : '#ffffff' }]}>
           <View style={styles.locationHeader}>
@@ -228,10 +247,16 @@ export default function MatchDetailScreen() {
               <View key={evt.id} style={styles.eventRow}>
                 <Text style={styles.eventMinute}>{evt.minute}'</Text>
                 <Text style={styles.eventIcon}>
-                  {evt.event_type === 'GOAL' ? '⚽' : evt.event_type === 'YELLOW_CARD' ? '🟨' : '🔴'}
+                  {evt.event_type === 'GOAL' || evt.event_type === 'OWN_GOAL' ? '⚽' : evt.event_type === 'YELLOW_CARD' ? '🟨' : '🔴'}
                 </Text>
                 <Text style={[styles.eventText, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>
-                  {evt.event_type === 'GOAL' ? 'Golo' : evt.event_type === 'YELLOW_CARD' ? 'Amarelo' : 'Vermelho'}
+                  {evt.event_type === 'GOAL'
+                    ? 'Golo'
+                    : evt.event_type === 'OWN_GOAL'
+                      ? 'Autogolo'
+                      : evt.event_type === 'YELLOW_CARD'
+                        ? 'Amarelo'
+                        : 'Vermelho'}
                   {evt.player_name ? ` - ${evt.player_name}` : ''}
                   {evt.is_penalty ? ' (Penálti)' : ''}
                 </Text>
@@ -250,6 +275,16 @@ export default function MatchDetailScreen() {
           fetchMatchData();
         }}
       />
+
+      {isAdmin && (
+        <RegisterResultModal
+          visible={isResultModalVisible}
+          match={match}
+          existingEvents={events}
+          onClose={() => setIsResultModalVisible(false)}
+          onSaved={fetchMatchData}
+        />
+      )}
     </SafeAreaView>
   );
 }

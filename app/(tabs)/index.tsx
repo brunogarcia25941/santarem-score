@@ -25,6 +25,8 @@ import { StadiumTexture } from '@/components/StadiumTexture';
 import { GestureDetector } from 'react-native-gesture-handler';
 import Animated from 'react-native-reanimated';
 import { useSwipeableTabs } from '@/hooks/useSwipeableTabs';
+import { Ionicons } from '@expo/vector-icons';
+import { groupMatches, defaultGroupIndex } from '@/utils/matchGroups';
 
 const { width } = Dimensions.get('window');
 
@@ -53,6 +55,8 @@ export default function HomeScreen() {
   const { getClubStanding } = useStandings();
   const [selectedComp, setSelectedComp] = useState('Todas');
   const [activeCardIndex, setActiveCardIndex] = useState(0);
+  // null = ainda não escolhida à mão, usa a jornada/semana atual
+  const [groupIndexOverride, setGroupIndexOverride] = useState<number | null>(null);
 
   // Permite arrastar o dedo sobre a lista de jogos para percorrer as
   // competições, de forma circular, sem precisar de tocar nos separadores.
@@ -77,10 +81,23 @@ export default function HomeScreen() {
 
   const favoriteClubs = clubs.filter((c) => favoriteClubIds.includes(c.id));
 
+  React.useEffect(() => {
+    setGroupIndexOverride(null);
+  }, [selectedComp]);
+
   const filteredMatches = matches.filter((m) => {
     if (selectedComp === 'Todas') return true;
     return m.competition.includes(selectedComp.replace(' - ', ' '));
   });
+
+  const groups = groupMatches(filteredMatches, selectedComp === 'Todas');
+  const groupIndex = Math.min(groupIndexOverride ?? defaultGroupIndex(groups), Math.max(groups.length - 1, 0));
+  const currentGroup = groups[groupIndex];
+
+  const goToGroup = (index: number) => {
+    Haptics.selectionAsync();
+    setGroupIndexOverride(Math.max(0, Math.min(groups.length - 1, index)));
+  };
 
   if (favoritesLoading) {
     return (
@@ -118,7 +135,8 @@ export default function HomeScreen() {
                   .sort((a, b) => new Date(b.matchDate).getTime() - new Date(a.matchDate).getTime())[0];
                 const liveNow = clubMatches.find((m) => m.status === 'live' || m.status === 'halftime');
                 const nextScheduled = [...clubMatches]
-                  .filter((m) => m.status === 'scheduled')
+                  // ignora jogos passados ainda por registar (senão apareciam como "próximo")
+                  .filter((m) => m.status === 'scheduled' && new Date(m.matchDate).getTime() > Date.now() - 3 * 60 * 60 * 1000)
                   .sort((a, b) => new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime())[0];
 
                 const standing = getClubStanding(item.id, item.division);
@@ -255,7 +273,30 @@ export default function HomeScreen() {
               )}
             </View>
           ) : (
-            filteredMatches.map((match) => <MatchCard key={match.id} match={match} />)
+            <>
+              <View style={styles.groupNav}>
+                <TouchableOpacity
+                  onPress={() => goToGroup(groupIndex - 1)}
+                  disabled={groupIndex === 0}
+                  hitSlop={12}
+                  style={{ opacity: groupIndex === 0 ? 0.3 : 1 }}
+                >
+                  <Ionicons name="chevron-back" size={22} color={isDark ? '#eef0f2' : '#1a1b1e'} />
+                </TouchableOpacity>
+                <Text style={[styles.groupLabel, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>
+                  {currentGroup?.label}
+                </Text>
+                <TouchableOpacity
+                  onPress={() => goToGroup(groupIndex + 1)}
+                  disabled={groupIndex >= groups.length - 1}
+                  hitSlop={12}
+                  style={{ opacity: groupIndex >= groups.length - 1 ? 0.3 : 1 }}
+                >
+                  <Ionicons name="chevron-forward" size={22} color={isDark ? '#eef0f2' : '#1a1b1e'} />
+                </TouchableOpacity>
+              </View>
+              {currentGroup?.matches.map((match) => <MatchCard key={match.id} match={match} />)}
+            </>
           )}
           </Animated.View>
         </GestureDetector>
@@ -301,4 +342,6 @@ const styles = StyleSheet.create({
   filterPill: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, marginRight: 8 },
   filterText: { fontSize: 13 },
   matchesList: { paddingHorizontal: 16 },
+  groupNav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
+  groupLabel: { fontSize: 15, fontWeight: '700' },
 });
