@@ -37,14 +37,19 @@ etc.
   código, ler antes de mexer).
 - ✅ Gesto de arrastar (swipe) para percorrer circularmente competições/
   divisões no Início e em Competições.
-- ✅ 16 jogos de teste inseridos com resultados reais da 1.ª Divisão
-  (jornadas 3 e 4) para ter dados para trabalhar sem depender do calendário
-  real (que o Bruno já tem, mas ainda não é usado).
-- ⚠️ Vários avisos de segurança do Supabase por resolver (não urgentes, ver
-  secção própria).
-- ⏳ Nunca foi corrida uma build de produção (APK/dev build) — só testado
-  via Expo Go. Há suspeita (não confirmada) de que alguns bugs de UX (ex.
-  frame drops) possam ser só do Expo Go e não acontecerem numa build real.
+- ✅ Calendário oficial 2026/27 importado (552 jogos: 1.ª Div. 240, 2.ª Div.
+  Série A 156, Série B 156) a partir dos comunicados 013 e 018 da AF Santarém
+  (migração `importar_calendario_2026_27`). Os "16 jogos de teste" antigos
+  eram na verdade as jornadas 1 e 2 reais (estavam mal etiquetados como 3 e
+  4) e foram reaproveitados: mantêm resultados e eventos.
+- ✅ Registo retroativo por admin: botão "Registar/Corrigir resultado (Admin)"
+  em `match/[id].tsx` → `RegisterResultModal` → função SQL
+  `admin_register_match_result` (ver secção Supabase).
+- ✅ Avisos de segurança do Supabase resolvidos (migração
+  `corrigir_avisos_seguranca`), exceto 2 — ver secção própria.
+- ✅ Build Android real via EAS (`eas.json`, perfil `preview` → APK interno)
+  já corrida e a funcionar bem no telemóvel do Bruno.
+- ⏳ Por fazer: notificações push (ver Limitações).
 
 ## Stack técnica
 
@@ -85,8 +90,19 @@ npm install
 npx expo start
 ```
 
-Testado até agora só via **Expo Go** num telemóvel real, num Mac/PC Windows
-com o projeto numa pasta local. Não há EAS/dev build configurado.
+Desenvolvimento: **Expo Go** num telemóvel real, PC Windows. O terminal é o
+**Windows PowerShell 5.1** — não aceita `&&`, dar comandos um por linha.
+
+Build real (APK Android interno):
+
+```powershell
+eas build --profile preview --platform android
+```
+
+**Armadilha do `.env`**: está no `.gitignore`, por isso o EAS não o envia e a
+app crasha ao abrir (`createClient` recebe `undefined`). As variáveis foram
+enviadas com `eas env:push preview --path .env`; se mudarem, repetir e fazer
+nova build (entram na compilação). iOS exigiria conta Apple Developer paga.
 
 Ambiente `.env` já preenchido com `EXPO_PUBLIC_SUPABASE_URL` e
 `EXPO_PUBLIC_SUPABASE_ANON_KEY` reais — não commitar chaves novas sem
@@ -146,30 +162,37 @@ assets/images/textures/ — grass-background.jpg e floodlights.jpg (fotos reais
   - Antes desta ligação ao Supabase, RLS estava **desativado** em `matches`/
     `match_events`/`push_tokens` — foi uma falha de segurança real que foi
     corrigida (ver Histórico).
+- `matches`: `competition` usa os valores `1.ª Divisão Distrital`,
+  `2.ª Divisão Série A`, `2.ª Divisão Série B` (o filtro do Início faz
+  `includes('2.ª Divisão Série A')`, por isso não alterar sem mexer lá).
+  `round` = `Jornada N` (1.ª Div. 1–30; 2.ª Div. 1–26, com 13 clubes por
+  série). Índice único `(competition, home_club_id, away_club_id)`. Datas em
+  UTC, convertidas de `Europe/Lisbon` na importação.
+- `admin_register_match_result(match_id, home, away, events jsonb)` —
+  `SECURITY INVOKER` (RLS garante admin), apaga os eventos do jogo, insere os
+  novos, e depois força o resultado e `status='finished'`. Isto é necessário
+  porque o trigger `update_match_score_on_event` soma +1 por golo: sem o
+  UPDATE final, resultado + marcadores contavam a dobrar. Liga a flag
+  `app.retroactive` para o `notify_on_goal_event` não gerar alertas de golos
+  antigos. Existe política DELETE de admin em `match_events` para isto.
 - Triggers/funções: `update_match_score_on_event` (recalcula `home_score`/
   `away_score` quando se insere um `match_event` do tipo GOAL/OWN_GOAL —
   usado nos dados de teste), `notify_on_goal_event`, `handle_new_user`.
 
-### Avisos de segurança pendentes (não urgentes, mas por resolver)
+### Avisos de segurança
 
-Via `mcp__Supabase__get_advisors` (tipo `security`):
+Resolvidos na migração `corrigir_avisos_seguranca`: `standings` passou a
+`security_invoker`; `search_path` fixo nas 3 funções de trigger; `EXECUTE`
+retirado a `anon`/`authenticated`/`public` nas 4 funções `SECURITY DEFINER`
+(triggers continuam a funcionar — o Postgres não verifica `EXECUTE` ao
+disparar um trigger).
 
-1. **ERROR** — view `public.standings` definida com `SECURITY DEFINER`
-   (deveria normalmente ser `SECURITY INVOKER` ou equivalente, para respeitar
-   RLS de quem consulta).
-2. **WARN** — 3 funções com `search_path` mutável:
-   `handle_new_user`, `update_match_score_on_event`, `notify_on_goal_event`.
-3. **WARN** — 4 funções `SECURITY DEFINER` executáveis por `anon`/
-   `authenticated` sem restrição: `handle_new_user`, `notify_on_goal_event`,
-   `rls_auto_enable`, `update_match_score_on_event`.
-4. **WARN** — proteção contra passwords comprometidas (HaveIBeenPwned)
-   desativada no Auth.
-5. **INFO** — `push_tokens` tem RLS ativo mas nenhuma política (ninguém
-   consegue ler/escrever lá enquanto isso não for corrigido — não é grave
-   porque a tabela ainda não está em uso).
-
-Nenhum destes foi pedido para resolver ainda — ficam aqui documentados para
-quando for oportuno.
+Ainda por resolver:
+1. **WARN** — proteção contra passwords comprometidas desativada (só no
+   dashboard: Auth → Providers → Email; pode exigir plano Pro).
+2. **INFO** — `push_tokens` com RLS e sem políticas. A tabela não tem
+   `user_id` (guarda `expo_push_token`, `club_ids`, `platform`), por isso a
+   política tem de ser desenhada em conjunto com a implementação das push.
 
 ## Sistema de tema / identidade visual
 
@@ -214,6 +237,11 @@ Componentes visuais de marca:
   fornecidas pelo Bruno (`assets/images/textures/grass-background.jpg` e
   `floodlights.jpg`), opacidade baixa (8-12%) + brilho de holofote em SVG
   por cima. Variante `grass` no Início, `floodlights` na página do jogo.
+- `src/components/RegisterResultModal.tsx` — modal de registo retroativo
+  (admin): resultado final + acontecimentos opcionais; valida que os golos
+  listados não excedem o resultado.
+- `src/utils/matchGroups.ts` — agrupa jogos por jornada (ou por semana em
+  "Todas") para o seletor ‹ Jornada N › do Início; abre na jornada atual.
 - `src/components/ClubBadge.tsx` — emblema do clube com fallback para
   iniciais + cor primária quando não há `badgeUrl` ou a imagem falha.
 
@@ -350,13 +378,10 @@ sem migrar para uma dev build).
 
 ## Limitações conhecidas / decisões em aberto
 
-- **Nunca foi feita uma build real (EAS/dev client)** — tudo testado via
-  Expo Go. Alguns problemas de performance podem ser específicos do Expo Go
-  (o próprio Bruno levantou esta hipótese) e não se sabe ainda se persistem
-  numa build de produção.
-- Calendário real de jogos: o Bruno já o tem, mas **ainda não está integrado**
-  — os 16 jogos atuais são dados de teste (resultados reais da 1.ª Divisão,
-  jornadas 3-4, inseridos manualmente).
+- Jogos por registar: J1 e J2 da 1.ª Divisão já se realizaram; três jogos
+  da J2 (Mocarriense–Mação, Torres Novas–Ouriquense, Tomar–Vasco Gama) estão
+  por fechar. O Mocarriense–Mação está `live` 3-1 com eventos de teste
+  (jogadores inventados: João Silva, etc.) — resolver com o Bruno.
 - Notificações push: tabela `push_tokens` existe mas está vazia e sem
   políticas RLS — funcionalidade não implementada.
 - Não há admin UI para gerir contas de delegados/moderadores — feito por SQL
