@@ -49,7 +49,13 @@ etc.
   `corrigir_avisos_seguranca`), exceto 2 — ver secção própria.
 - ✅ Build Android real via EAS (`eas.json`, perfil `preview` → APK interno)
   já corrida e a funcionar bem no telemóvel do Bruno.
-- ⏳ Por fazer: notificações push (ver Limitações).
+- ✅ Notificações push de golos: Edge Function `send-goal-notification` +
+  trigger `notify_on_goal_event` (via `pg_net`) + tabela `push_tokens` (RLS
+  sem SELECT público) + registo do token em `src/services/pushNotifications.ts`,
+  ligado ao switch "Golos em Direto" do Perfil e aos favoritos. Só funciona
+  em build real (Expo Go não tem os módulos nativos). Falta o Bruno gerar a
+  credencial FCM V1 e ligá-la no EAS (`eas credentials`) antes da próxima
+  build Android — sem isso o token nem chega a ser gerado.
 
 ## Stack técnica
 
@@ -175,6 +181,12 @@ assets/images/textures/ — grass-background.jpg e floodlights.jpg (fotos reais
   UPDATE final, resultado + marcadores contavam a dobrar. Liga a flag
   `app.retroactive` para o `notify_on_goal_event` não gerar alertas de golos
   antigos. Existe política DELETE de admin em `match_events` para isto.
+- Edge Function `send-goal-notification` (`supabase/functions` — só existe
+  no projeto remoto, não há pasta local) — recebe `{match_id, club_id,
+  club_name, minute, player_name, event_type}`, lê `push_tokens` (service
+  role) filtrando por `club_ids` contém `club_id`, e envia via Expo Push API
+  em lotes de 100. Limpa tokens com erro `DeviceNotRegistered`. `verify_jwt`
+  fica `true`; o trigger autentica-se com a chave anon do projeto (pública).
 - Triggers/funções: `update_match_score_on_event` (recalcula `home_score`/
   `away_score` quando se insere um `match_event` do tipo GOAL/OWN_GOAL —
   usado nos dados de teste), `notify_on_goal_event`, `handle_new_user`.
@@ -185,14 +197,18 @@ Resolvidos na migração `corrigir_avisos_seguranca`: `standings` passou a
 `security_invoker`; `search_path` fixo nas 3 funções de trigger; `EXECUTE`
 retirado a `anon`/`authenticated`/`public` nas 4 funções `SECURITY DEFINER`
 (triggers continuam a funcionar — o Postgres não verifica `EXECUTE` ao
-disparar um trigger).
+disparar um trigger). `push_tokens` ganhou políticas de INSERT/UPDATE/DELETE
+sem SELECT público (migração `push_tokens_rls_e_pg_net`) — cada aparelho só
+escreve a sua própria linha, identificada pelo token; só a Edge Function
+(service role) lê a tabela.
 
 Ainda por resolver:
 1. **WARN** — proteção contra passwords comprometidas desativada (só no
    dashboard: Auth → Providers → Email; pode exigir plano Pro).
-2. **INFO** — `push_tokens` com RLS e sem políticas. A tabela não tem
-   `user_id` (guarda `expo_push_token`, `club_ids`, `platform`), por isso a
-   política tem de ser desenhada em conjunto com a implementação das push.
+2. **WARN** — extensão `pg_net` registada no schema `public` (deveria estar
+   noutro schema). `ALTER EXTENSION ... SET SCHEMA` não é suportado por esta
+   extensão; as suas funções já vivem em `net.*`, não em `public.*` — risco
+   real baixo, fica por resolver.
 
 ## Sistema de tema / identidade visual
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -6,12 +6,22 @@ import {
   ScrollView,
   Switch,
   TouchableOpacity,
+  Alert,
+  Linking,
   useColorScheme,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/AuthContext';
+import { useFavorites } from '@/context/FavoritesContext';
+import {
+  getPushPermissionStatus,
+  isPushEnabledLocally,
+  setPushEnabledLocally,
+  syncPushToken,
+  disablePushToken,
+} from '@/services/pushNotifications';
 
 const ROLE_LABEL: Record<string, string> = {
   admin: 'Administrador',
@@ -23,10 +33,45 @@ export default function ProfileScreen() {
   const router = useRouter();
   const isDark = useColorScheme() === 'dark';
   const { session, profile, signOut } = useAuth();
+  const { favoriteClubIds } = useFavorites();
 
-  const [liveGoalNotifs, setLiveGoalNotifs] = useState(true);
-  const [matchStartNotifs, setMatchStartNotifs] = useState(true);
-  const [finalScoreNotifs, setFinalScoreNotifs] = useState(true);
+  const [liveGoalNotifs, setLiveGoalNotifs] = useState(false);
+  const [togglingPush, setTogglingPush] = useState(false);
+
+  useEffect(() => {
+    isPushEnabledLocally().then(setLiveGoalNotifs);
+  }, []);
+
+  const handleToggleLiveGoalNotifs = async (value: boolean) => {
+    setTogglingPush(true);
+    try {
+      if (value) {
+        const ok = await syncPushToken(favoriteClubIds);
+        if (!ok) {
+          const status = await getPushPermissionStatus();
+          Alert.alert(
+            'Não foi possível ativar',
+            status === 'denied'
+              ? 'As notificações estão bloqueadas para esta app nas definições do telemóvel.'
+              : 'As notificações push só funcionam numa build instalada (não no Expo Go).',
+            status === 'denied'
+              ? [{ text: 'Abrir Definições', onPress: () => Linking.openSettings() }, { text: 'Fechar' }]
+              : [{ text: 'OK' }]
+          );
+          setTogglingPush(false);
+          return;
+        }
+        await setPushEnabledLocally(true);
+        setLiveGoalNotifs(true);
+      } else {
+        await disablePushToken();
+        await setPushEnabledLocally(false);
+        setLiveGoalNotifs(false);
+      }
+    } finally {
+      setTogglingPush(false);
+    }
+  };
 
   const isDelegate = Boolean(session);
   const roleLabel = profile ? ROLE_LABEL[profile.role] || 'Utilizador Geral' : 'Utilizador Geral';
@@ -55,30 +100,30 @@ export default function ProfileScreen() {
               <Text style={[styles.settingLabel, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>Golos em Direto</Text>
               <Text style={styles.settingSub}>Notificar sempre que houver golo nos favoritos</Text>
             </View>
-            <Switch value={liveGoalNotifs} onValueChange={setLiveGoalNotifs} />
+            <Switch value={liveGoalNotifs} onValueChange={handleToggleLiveGoalNotifs} disabled={togglingPush} />
           </View>
 
           <View style={styles.divider} />
 
           <View style={styles.settingRow}>
             <View style={styles.settingText}>
-              <Text style={[styles.settingLabel, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>Início de Jogo</Text>
+              <Text style={[styles.settingLabel, { color: isDark ? '#71717a' : '#a1a1aa' }]}>Início de Jogo</Text>
               <Text style={styles.settingSub}>Avisar 15 minutos antes do apito inicial</Text>
             </View>
-            <Switch value={matchStartNotifs} onValueChange={setMatchStartNotifs} />
+            <Switch value={false} disabled />
           </View>
 
           <View style={styles.divider} />
 
           <View style={styles.settingRow}>
             <View style={styles.settingText}>
-              <Text style={[styles.settingLabel, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>Resultado Final</Text>
+              <Text style={[styles.settingLabel, { color: isDark ? '#71717a' : '#a1a1aa' }]}>Resultado Final</Text>
               <Text style={styles.settingSub}>Resumo no encerramento da partida</Text>
             </View>
-            <Switch value={finalScoreNotifs} onValueChange={setFinalScoreNotifs} />
+            <Switch value={false} disabled />
           </View>
           <Text style={styles.notifsDisclaimer}>
-            Estas opções ainda não ativam notificações reais — essa funcionalidade está a ser construída.
+            "Início de Jogo" e "Resultado Final" ainda não estão disponíveis — só "Golos em Direto" está ativa.
           </Text>
         </View>
 

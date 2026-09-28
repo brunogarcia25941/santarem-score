@@ -9,6 +9,7 @@ import { GoalAlertBanner } from '@/components/GoalAlertBanner';
 import { vibrateGoal } from '@/services/notifications';
 import { supabase } from '@/services/supabase';
 import { syncOfflineQueue } from '@/services/matchActions';
+import { isPushEnabledLocally, syncPushToken } from '@/services/pushNotifications';
 
 function RealtimeGoalWatcher() {
   const { favoriteClubIds } = useFavorites();
@@ -72,6 +73,20 @@ function RealtimeGoalWatcher() {
   );
 }
 
+function PushTokenSync() {
+  const { favoriteClubIds } = useFavorites();
+
+  useEffect(() => {
+    // Só ressincroniza (novo token ou novos favoritos) se o utilizador já
+    // tinha ativado as notificações no Perfil — nunca pede permissão sozinho.
+    isPushEnabledLocally().then((enabled) => {
+      if (enabled) syncPushToken(favoriteClubIds);
+    });
+  }, [favoriteClubIds]);
+
+  return null;
+}
+
 function OfflineQueueSync() {
   useEffect(() => {
     // Tenta despachar eventos que ficaram presos offline logo no arranque...
@@ -116,6 +131,7 @@ export default function RootLayout() {
       <AuthProvider>
       <FavoritesProvider>
         <OfflineQueueSync />
+        <PushTokenSync />
         <RealtimeGoalWatcher />
         <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: screenBg } }}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

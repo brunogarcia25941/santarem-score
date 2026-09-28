@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "224347198558",
+    "project_id": "santarem-score",
+    "storage_bucket": "santarem-score.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:224347198558:android:c67f0e09eeec44f1da50cf",
+        "android_client_info": {
+          "package_name": "com.santaremscore.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDPhFE_ZoK0RzxcLazOVv1kEi8xgBlMLlM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
