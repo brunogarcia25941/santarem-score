@@ -76,15 +76,13 @@ export async function syncPushToken(favoriteClubIds: string[]): Promise<boolean>
   const token = await getExpoPushToken();
   if (!token) return false;
 
-  const { error } = await supabase.from('push_tokens').upsert(
-    {
-      expo_push_token: token,
-      club_ids: favoriteClubIds,
-      platform: Platform.OS,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: 'expo_push_token' }
-  );
+  // Escrita via função SECURITY DEFINER: um upsert direto exigiria política
+  // de SELECT, que deixaria qualquer app listar os tokens de todos.
+  const { error } = await supabase.rpc('register_push_token', {
+    p_token: token,
+    p_club_ids: favoriteClubIds,
+    p_platform: Platform.OS,
+  });
 
   if (error) {
     console.error('Erro a sincronizar push token:', error);
@@ -104,5 +102,5 @@ export async function getPushPermissionStatus(): Promise<Notifications.Permissio
 export async function disablePushToken(): Promise<void> {
   const token = cachedToken ?? (await Notifications.getExpoPushTokenAsync().catch(() => null))?.data;
   if (!token) return;
-  await supabase.from('push_tokens').delete().eq('expo_push_token', token);
+  await supabase.rpc('unregister_push_token', { p_token: token });
 }

@@ -197,10 +197,12 @@ Resolvidos na migração `corrigir_avisos_seguranca`: `standings` passou a
 `security_invoker`; `search_path` fixo nas 3 funções de trigger; `EXECUTE`
 retirado a `anon`/`authenticated`/`public` nas 4 funções `SECURITY DEFINER`
 (triggers continuam a funcionar — o Postgres não verifica `EXECUTE` ao
-disparar um trigger). `push_tokens` ganhou políticas de INSERT/UPDATE/DELETE
-sem SELECT público (migração `push_tokens_rls_e_pg_net`) — cada aparelho só
-escreve a sua própria linha, identificada pelo token; só a Edge Function
-(service role) lê a tabela.
+disparar um trigger). `push_tokens` não tem nenhuma política para anon/
+authenticated (RLS bloqueia leitura e escrita direta): o cliente escreve só
+via `register_push_token` / `unregister_push_token` (SECURITY DEFINER,
+valida o formato do token); só a Edge Function (service role) lê a tabela.
+Lição: um `upsert` direto falha com 42501 sem política de SELECT (o
+`ON CONFLICT DO UPDATE` exige-a), por isso não usar `.upsert()` aqui.
 
 Ainda por resolver:
 1. **WARN** — proteção contra passwords comprometidas desativada (só no
