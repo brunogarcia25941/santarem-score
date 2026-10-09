@@ -9,6 +9,7 @@ import {
   useColorScheme,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import { useRouter } from 'expo-router';
 import { supabase } from '@/services/supabase';
 import { useClubs } from '@/hooks/useClubs';
 import { ClubBadge } from '@/components/ClubBadge';
@@ -39,6 +40,7 @@ const DIVISIONS = [
 ];
 
 export default function CompetitionsScreen() {
+  const router = useRouter();
   const isDark = useColorScheme() === 'dark';
   const [selectedDivision, setSelectedDivision] = useState('1_divisao');
   // Classificações das 3 divisões já todas em memória — trocar de divisão
@@ -153,7 +155,14 @@ export default function CompetitionsScreen() {
                   {index + 1}
                 </Text>
 
-                <View style={styles.colClub}>
+                <TouchableOpacity
+                  style={styles.colClub}
+                  activeOpacity={0.7}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    router.push(`/club/${row.club_id}`);
+                  }}
+                >
                   <ClubBadge
                     club={{
                       id: row.club_id,
@@ -173,7 +182,7 @@ export default function CompetitionsScreen() {
                   <Text style={[styles.clubName, { color: isDark ? '#eef0f2' : '#1a1b1e', marginLeft: 8 }]} numberOfLines={1}>
                     {row.short_name}
                   </Text>
-                </View>
+                </TouchableOpacity>
 
                 <Text style={[styles.colStat, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>{row.played}</Text>
                 <Text style={[styles.colStat, { color: isDark ? '#a1a1aa' : '#71717a' }]}>{row.won}</Text>

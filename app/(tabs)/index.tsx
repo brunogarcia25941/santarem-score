@@ -17,7 +17,7 @@ import { useClubs } from '@/hooks/useClubs';
 import { useLiveMatches } from '@/hooks/useLiveMatches';
 import { useStandings } from '@/hooks/useStandings';
 import { MatchCard } from '@/components/MatchCard';
-import { ClubBadge } from '@/components/ClubBadge';
+import { ClubBadgeLink } from '@/components/ClubBadgeLink';
 import { formatMatchDate } from '@/utils/dateFormat';
 import { Match, Club } from '@/types';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -153,7 +153,7 @@ export default function HomeScreen() {
                     ]}
                   >
                     <View style={styles.cardHeader}>
-                      <ClubBadge club={item} size={40} />
+                      <ClubBadgeLink club={item} size={40} />
                       <View style={styles.cardHeaderText}>
                         <Text style={[styles.clubTitle, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>
                           {item.shortName}

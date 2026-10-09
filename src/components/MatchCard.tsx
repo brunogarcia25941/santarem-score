@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { Match } from '@/types';
 import { ScoreboardPlate } from './ScoreboardPlate';
-import { ClubBadge } from './ClubBadge';
+import { ClubBadgeLink } from './ClubBadgeLink';
 import { formatMatchDate } from '@/utils/dateFormat';
 import { setMatchTransitionOrigin, measureView } from '@/utils/matchTransitionOrigin';
 
@@ -78,7 +78,7 @@ export function MatchCard({ match }: MatchCardProps) {
         {/* Equipa Visitada — emblema em cima, nome por baixo (dá espaço a nomes longos) */}
         <View style={styles.team}>
           <View ref={homeBadgeRef} collapsable={false}>
-            <ClubBadge club={match.homeClub} size={36} />
+            <ClubBadgeLink club={match.homeClub} size={36} />
           </View>
           <Text style={[styles.teamName, { color: isDark ? '#e4e6eb' : '#111827' }]} numberOfLines={2}>
             {match.homeClub.shortName}
@@ -107,7 +107,7 @@ export function MatchCard({ match }: MatchCardProps) {
         {/* Equipa Visitante */}
         <View style={styles.team}>
           <View ref={awayBadgeRef} collapsable={false}>
-            <ClubBadge club={match.awayClub} size={36} />
+            <ClubBadgeLink club={match.awayClub} size={36} />
           </View>
           <Text style={[styles.teamName, { color: isDark ? '#e4e6eb' : '#111827' }]} numberOfLines={2}>
             {match.awayClub.shortName}

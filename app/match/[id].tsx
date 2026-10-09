@@ -15,7 +15,7 @@ import * as Haptics from 'expo-haptics';
 import { supabase } from '@/services/supabase';
 import { mapClub } from '@/services/clubs';
 import { Match } from '@/types';
-import { ClubBadge } from '@/components/ClubBadge';
+import { ClubBadgeLink } from '@/components/ClubBadgeLink';
 import { useAuth } from '@/context/AuthContext';
 import { DelegadoPanelModal } from '@/components/DelegadoPanelModal';
 import { RegisterResultModal } from '@/components/RegisterResultModal';
@@ -134,7 +134,7 @@ export default function MatchDetailScreen() {
           <View style={styles.scoreboard}>
             <View style={styles.teamColumn}>
               <FlyInFromOrigin origin={transitionOrigin?.homeBadge}>
-                <ClubBadge club={match.homeClub} size={48} />
+                <ClubBadgeLink club={match.homeClub} size={48} />
               </FlyInFromOrigin>
               <Text
                 style={[styles.teamName, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}
@@ -162,7 +162,7 @@ export default function MatchDetailScreen() {
 
             <View style={styles.teamColumn}>
               <FlyInFromOrigin origin={transitionOrigin?.awayBadge}>
-                <ClubBadge club={match.awayClub} size={48} />
+                <ClubBadgeLink club={match.awayClub} size={48} />
               </FlyInFromOrigin>
               <Text
                 style={[styles.teamName, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}

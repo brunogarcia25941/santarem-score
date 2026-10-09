@@ -49,6 +49,12 @@ etc.
   `corrigir_avisos_seguranca`), exceto 2 — ver secção própria.
 - ✅ Build Android real via EAS (`eas.json`, perfil `preview` → APK interno)
   já corrida e a funcionar bem no telemóvel do Bruno.
+- ✅ Tocar numa notificação abre o ecrã do jogo (`NotificationNavigator` em
+  `app/_layout.tsx`, usa `data.matchId`); com a app aberta o push do sistema
+  fica suprimido porque o `RealtimeGoalWatcher` já mostra o seu banner.
+- ✅ Emblemas de clubes são ligações para `/club/[id]` via
+  `src/components/ClubBadgeLink.tsx` (usar sempre que um emblema aparece fora
+  da própria ficha); na classificação e nos favoritos é a linha/chip inteira.
 - ✅ Notificações push de golos: Edge Function `send-goal-notification` +
   trigger `notify_on_goal_event` (via `pg_net`) + tabela `push_tokens` (RLS
   sem SELECT público) + registo do token em `src/services/pushNotifications.ts`,

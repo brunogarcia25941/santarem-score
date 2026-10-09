@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Stack } from 'expo-router';
+import { Stack, useRouter, usePathname, useRootNavigationState } from 'expo-router';
+import * as Notifications from 'expo-notifications';
 import { StatusBar } from 'expo-status-bar';
 import { AppState, AppStateStatus, useColorScheme } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -73,6 +74,36 @@ function RealtimeGoalWatcher() {
   );
 }
 
+/**
+ * Ao tocar numa notificação de golo abre o ecrã desse jogo. O hook
+ * useLastNotificationResponse cobre tanto a app já aberta/em segundo plano
+ * como o arranque a frio (app fechada) — daí esperar que o navegador raiz
+ * esteja montado antes de navegar.
+ */
+function NotificationNavigator() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const navigationState = useRootNavigationState();
+  const response = Notifications.useLastNotificationResponse();
+  const handledId = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!response || !navigationState?.key) return;
+    if (response.actionIdentifier !== Notifications.DEFAULT_ACTION_IDENTIFIER) return;
+
+    const notificationId = response.notification.request.identifier;
+    if (handledId.current === notificationId) return;
+    handledId.current = notificationId;
+
+    const matchId = response.notification.request.content.data?.matchId;
+    if (typeof matchId !== 'string') return;
+    if (pathname === `/match/${matchId}`) return;
+    router.push(`/match/${matchId}`);
+  }, [response, navigationState?.key]);
+
+  return null;
+}
+
 function PushTokenSync() {
   const { favoriteClubIds } = useFavorites();
 
@@ -132,6 +163,7 @@ export default function RootLayout() {
       <FavoritesProvider>
         <OfflineQueueSync />
         <PushTokenSync />
+        <NotificationNavigator />
         <RealtimeGoalWatcher />
         <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: screenBg } }}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

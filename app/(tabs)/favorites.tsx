@@ -64,8 +64,10 @@ export default function FavoritesScreen() {
 
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.clubsRow}>
               {favoriteClubs.map((club) => (
-                <View
+                <TouchableOpacity
                   key={club.id}
+                  activeOpacity={0.7}
+                  onPress={() => router.push(`/club/${club.id}`)}
                   style={[
                     styles.clubChip,
                     { backgroundColor: isDark ? '#202226' : '#ffffff', borderColor: isDark ? '#2c2e33' : '#e2e5e8' },
@@ -75,7 +77,7 @@ export default function FavoritesScreen() {
                   <Text style={[styles.clubChipText, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>
                     {club.shortName}
                   </Text>
-                </View>
+                </TouchableOpacity>
               ))}
             </ScrollView>
 

@@ -20,17 +20,19 @@ export async function setPushEnabledLocally(enabled: boolean): Promise<void> {
  * Push (golos dos clubes favoritos). Só funciona numa build real (EAS) —
  * o Expo Go não tem os módulos nativos de push desta app. `push_tokens` não
  * está ligada a uma conta: cada aparelho tem a sua linha, identificada pelo
- * próprio token (RLS deixa qualquer um escrever a sua, sem SELECT público —
- * ver migração `push_tokens_rls_e_pg_net`).
+ * próprio token; a escrita passa por register_push_token (a tabela é
+ * ilegível/inescrevível diretamente — ver migração `push_tokens_via_funcoes`).
  */
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
+    // Com a app aberta o RealtimeGoalWatcher já mostra o seu próprio banner;
+    // mostrar também o do sistema duplicava o aviso.
+    shouldShowAlert: false,
+    shouldPlaySound: false,
     shouldSetBadge: false,
-    shouldShowBanner: true,
-    shouldShowList: true,
+    shouldShowBanner: false,
+    shouldShowList: false,
   }),
 });
 
