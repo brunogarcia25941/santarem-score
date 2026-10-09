@@ -32,3 +32,25 @@ export function formatMatchDate(iso: string | null | undefined): string {
   const capitalized = weekday.charAt(0).toUpperCase() + weekday.slice(1);
   return `${capitalized}, ${time}`;
 }
+
+
+/**
+ * Data completa de um jogo, sempre com dia, mês e ano (nunca "Hoje"/"Sáb"
+ * sozinho, que não diz de que dia se fala): "Dom, 13 set 2026 · 16:00".
+ * Fuso de Lisboa.
+ */
+export function formatMatchDateFull(iso: string | null | undefined): string {
+  if (!iso) return '';
+  const date = new Date(iso);
+  if (isNaN(date.getTime())) return iso;
+
+  const timeZone = 'Europe/Lisbon';
+  const clean = (t: string) => t.replace('.', '');
+  const weekday = clean(new Intl.DateTimeFormat('pt-PT', { weekday: 'short', timeZone }).format(date));
+  const month = clean(new Intl.DateTimeFormat('pt-PT', { month: 'short', timeZone }).format(date));
+  const day = new Intl.DateTimeFormat('pt-PT', { day: 'numeric', timeZone }).format(date);
+  const year = new Intl.DateTimeFormat('pt-PT', { year: 'numeric', timeZone }).format(date);
+  const time = new Intl.DateTimeFormat('pt-PT', { hour: '2-digit', minute: '2-digit', timeZone }).format(date);
+
+  return `${weekday.charAt(0).toUpperCase() + weekday.slice(1)}, ${day} ${month} ${year} · ${time}`;
+}

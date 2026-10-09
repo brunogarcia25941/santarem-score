@@ -35,24 +35,46 @@ function RealtimeGoalWatcher() {
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'match_events' },
-        (payload: any) => {
+        async (payload: any) => {
           const event = payload.new;
-          console.log('[DEBUG Realtime] Evento recebido:', event);
-
           if (!event || !isMounted.current) return;
 
-          if (event.event_type === 'GOAL' || event.event_type === 'OWN_GOAL') {
-            const isFav = favoriteClubIds.length === 0 || favoriteClubIds.includes(event.club_id);
+          // Interessa o que acontece em qualquer jogo de um clube favorito — não só
+          // os eventos do clube favorito (o golo do adversário também conta).
+          const { data: match } = await supabase
+            .from('matches')
+            .select('status, home_club_id, away_club_id, home_score, away_score, home:clubs!matches_home_club_id_fkey(short_name), away:clubs!matches_away_club_id_fkey(short_name)')
+            .eq('id', event.match_id)
+            .single();
+          if (!match || !isMounted.current) return;
+          // Registo retroativo de um jogo já terminado: não é um acontecimento em direto.
+          if (match.status === 'finished') return;
 
-            if (isFav) {
-              vibrateGoal();
-              setAlertData({
-                visible: true,
-                title: '⚽ GOLO NA AF SANTARÉM!',
-                message: `${event.player_name || 'Golo marcado'} aos ${event.minute}'!`,
-              });
-            }
-          }
+          const involvesFav =
+            favoriteClubIds.length === 0 ||
+            favoriteClubIds.includes(match.home_club_id) ||
+            favoriteClubIds.includes(match.away_club_id);
+          if (!involvesFav) return;
+
+          const name = (c: any) => (Array.isArray(c) ? c[0] : c)?.short_name ?? '';
+          const scoreline = `${name(match.home)} ${match.home_score}-${match.away_score} ${name(match.away)}`;
+          const player = event.player_name ? `${event.player_name} ` : '';
+
+          const headlines: Record<string, string> = {
+            GOAL: '⚽ GOLO!',
+            OWN_GOAL: '⚽ AUTOGOLO!',
+            YELLOW_CARD: '🟨 Cartão amarelo',
+            RED_CARD: '🟥 Cartão vermelho',
+          };
+          const title = headlines[event.event_type];
+          if (!title) return;
+
+          if (event.event_type === 'GOAL' || event.event_type === 'OWN_GOAL') vibrateGoal();
+          setAlertData({
+            visible: true,
+            title,
+            message: `${player}${event.minute}' · ${scoreline}`,
+          });
         }
       )
       .subscribe();

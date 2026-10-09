@@ -24,6 +24,7 @@ import { StadiumTexture } from '@/components/StadiumTexture';
 import { ScoreboardPlate } from '@/components/ScoreboardPlate';
 import { FlyInFromOrigin } from '@/components/FlyInFromOrigin';
 import { consumeMatchTransitionOrigin } from '@/utils/matchTransitionOrigin';
+import { formatMatchDateFull } from '@/utils/dateFormat';
 
 export default function MatchDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -130,6 +131,9 @@ export default function MatchDetailScreen() {
           <Text style={[styles.competitionText, { color: isDark ? '#a1a1aa' : '#71717a' }]}>
             {match.competition} • {match.round}
           </Text>
+          <Text style={[styles.dateText, { color: isDark ? '#a1a1aa' : '#52525b' }]}>
+            {formatMatchDateFull(match.matchDate)}
+          </Text>
 
           <View style={styles.scoreboard}>
             <View style={styles.teamColumn}>
@@ -235,33 +239,60 @@ export default function MatchDetailScreen() {
           </View>
         </View>
 
-        {/* Match Ticker em Tempo Real */}
-        <Text style={[styles.tickerTitle, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>Acontecimentos</Text>
+        {/* Acontecimentos em tempo real: casa à esquerda, visitante à direita */}
         <View style={[styles.tickerCard, { backgroundColor: isDark ? '#202226' : '#ffffff' }]}>
           {events.length === 0 ? (
             <Text style={{ color: '#71717a', textAlign: 'center', paddingVertical: 10 }}>
               Sem eventos registados até ao momento.
             </Text>
           ) : (
-            events.map((evt) => (
-              <View key={evt.id} style={styles.eventRow}>
-                <Text style={styles.eventMinute}>{evt.minute}'</Text>
-                <Text style={styles.eventIcon}>
-                  {evt.event_type === 'GOAL' || evt.event_type === 'OWN_GOAL' ? '⚽' : evt.event_type === 'YELLOW_CARD' ? '🟨' : '🔴'}
-                </Text>
-                <Text style={[styles.eventText, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>
-                  {evt.event_type === 'GOAL'
-                    ? 'Golo'
-                    : evt.event_type === 'OWN_GOAL'
-                      ? 'Autogolo'
-                      : evt.event_type === 'YELLOW_CARD'
-                        ? 'Amarelo'
-                        : 'Vermelho'}
-                  {evt.player_name ? ` - ${evt.player_name}` : ''}
-                  {evt.is_penalty ? ' (Penálti)' : ''}
-                </Text>
-              </View>
-            ))
+            events.map((evt) => {
+              // Um autogolo conta para a equipa adversária, por isso aparece do lado
+              // de quem fica com o golo (coerente com o marcador).
+              const isHomeClub = evt.club_id === match.homeClub.id;
+              const side: 'home' | 'away' =
+                evt.event_type === 'OWN_GOAL' ? (isHomeClub ? 'away' : 'home') : isHomeClub ? 'home' : 'away';
+
+              const icon =
+                evt.event_type === 'GOAL' || evt.event_type === 'OWN_GOAL'
+                  ? '⚽'
+                  : evt.event_type === 'YELLOW_CARD'
+                    ? '🟨'
+                    : '🟥';
+              const fallbackLabel =
+                evt.event_type === 'GOAL'
+                  ? 'Golo'
+                  : evt.event_type === 'OWN_GOAL'
+                    ? 'Autogolo'
+                    : evt.event_type === 'YELLOW_CARD'
+                      ? 'Amarelo'
+                      : 'Vermelho';
+              const label =
+                (evt.player_name || fallbackLabel) +
+                (evt.event_type === 'OWN_GOAL' && evt.player_name ? ' (a.g.)' : '') +
+                (evt.is_penalty ? ' (pen.)' : '');
+              const textColor = isDark ? '#eef0f2' : '#1a1b1e';
+
+              return (
+                <View key={evt.id} style={styles.eventRow}>
+                  <View style={styles.eventSide}>
+                    {side === 'home' && (
+                      <Text style={[styles.eventText, { color: textColor }]} numberOfLines={2}>
+                        {icon} {label}
+                      </Text>
+                    )}
+                  </View>
+                  <Text style={styles.eventMinute}>{evt.minute}'</Text>
+                  <View style={styles.eventSide}>
+                    {side === 'away' && (
+                      <Text style={[styles.eventText, { color: textColor, textAlign: 'right' }]} numberOfLines={2}>
+                        {label} {icon}
+                      </Text>
+                    )}
+                  </View>
+                </View>
+              );
+            })
           )}
         </View>
       </ScrollView>
@@ -304,7 +335,8 @@ const styles = StyleSheet.create({
   shadowRadius: 6,
   elevation: 4,
 },
-  competitionText: { fontSize: 13, textAlign: 'center', marginBottom: 16 },
+  competitionText: { fontSize: 13, textAlign: 'center', marginBottom: 4 },
+  dateText: { fontSize: 12, fontWeight: '600', textAlign: 'center', marginBottom: 16 },
   scoreboard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   teamColumn: { flex: 1, alignItems: 'center', minWidth: 0 },
   teamName: { fontSize: 12.5, fontWeight: '700', marginTop: 8, textAlign: 'center', lineHeight: 15 },
@@ -356,7 +388,7 @@ const styles = StyleSheet.create({
   tickerTitle: { fontSize: 16, fontWeight: '800', marginBottom: 10 },
   tickerCard: { padding: 16, borderRadius: 16 },
   eventRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8 },
-  eventMinute: { width: 32, fontSize: 13, fontWeight: '700', color: '#71717a' },
-  eventIcon: { fontSize: 14, marginHorizontal: 8 },
+  eventSide: { flex: 1 },
+  eventMinute: { width: 44, textAlign: 'center', fontSize: 13, fontWeight: '700', color: '#71717a' },
   eventText: { fontSize: 14, fontWeight: '500' },
 });

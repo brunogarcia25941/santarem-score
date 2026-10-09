@@ -187,12 +187,15 @@ assets/images/textures/ — grass-background.jpg e floodlights.jpg (fotos reais
   UPDATE final, resultado + marcadores contavam a dobrar. Liga a flag
   `app.retroactive` para o `notify_on_goal_event` não gerar alertas de golos
   antigos. Existe política DELETE de admin em `match_events` para isto.
-- Edge Function `send-goal-notification` (`supabase/functions` — só existe
-  no projeto remoto, não há pasta local) — recebe `{match_id, club_id,
-  club_name, minute, player_name, event_type}`, lê `push_tokens` (service
-  role) filtrando por `club_ids` contém `club_id`, e envia via Expo Push API
-  em lotes de 100. Limpa tokens com erro `DeviceNotRegistered`. `verify_jwt`
-  fica `true`; o trigger autentica-se com a chave anon do projeto (pública).
+- Edge Function `send-goal-notification` (só existe no projeto remoto, não
+  há pasta local) — recebe o evento (`match_id, club_id, minute, player_name,
+  event_type, is_penalty`), lê o jogo (marcador + nomes) e notifica **quem
+  segue qualquer das duas equipas** do jogo (golo, autogolo, amarelo,
+  vermelho), não só o clube do evento. Duas consultas a `push_tokens` (uma
+  por clube) com dedupe por token — `.or()` com JSON é frágil. Limpa tokens
+  `DeviceNotRegistered`. `verify_jwt=true`; o trigger usa a chave anon.
+  O `RealtimeGoalWatcher` (banner com a app aberta) segue a mesma regra e
+  ignora jogos já `finished` (registo retroativo não é "direto").
 - Triggers/funções: `update_match_score_on_event` (recalcula `home_score`/
   `away_score` quando se insere um `match_event` do tipo GOAL/OWN_GOAL —
   usado nos dados de teste), `notify_on_goal_event`, `handle_new_user`.

@@ -5,7 +5,7 @@ import * as Haptics from 'expo-haptics';
 import { Match } from '@/types';
 import { ScoreboardPlate } from './ScoreboardPlate';
 import { ClubBadgeLink } from './ClubBadgeLink';
-import { formatMatchDate } from '@/utils/dateFormat';
+import { formatMatchDateFull } from '@/utils/dateFormat';
 import { setMatchTransitionOrigin, measureView } from '@/utils/matchTransitionOrigin';
 
 interface MatchCardProps {
@@ -69,10 +69,13 @@ export function MatchCard({ match }: MatchCardProps) {
         {match.status === 'finished' && (
           <Text style={[styles.statusText, { color: isDark ? '#636770' : '#9ca3af' }]}>FIM</Text>
         )}
-        {match.status === 'scheduled' && (
-          <Text style={[styles.statusText, { color: isDark ? '#8b8f97' : '#6b7280' }]}>{formatMatchDate(match.matchDate)}</Text>
-        )}
       </View>
+
+      {match.status === 'scheduled' && (
+        <Text style={[styles.dateLine, { color: isDark ? '#a1a1aa' : '#52525b' }]}>
+          {formatMatchDateFull(match.matchDate)}
+        </Text>
+      )}
 
       <View style={styles.teamsRow}>
         {/* Equipa Visitada — emblema em cima, nome por baixo (dá espaço a nomes longos) */}
@@ -146,6 +149,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     gap: 8,
   },
+  dateLine: { fontSize: 12, fontWeight: '600', textAlign: 'center', marginTop: -4, marginBottom: 12 },
   competition: {
     flex: 1,
     fontSize: 11,

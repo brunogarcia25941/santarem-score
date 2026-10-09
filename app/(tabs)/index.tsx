@@ -18,7 +18,7 @@ import { useLiveMatches } from '@/hooks/useLiveMatches';
 import { useStandings } from '@/hooks/useStandings';
 import { MatchCard } from '@/components/MatchCard';
 import { ClubBadgeLink } from '@/components/ClubBadgeLink';
-import { formatMatchDate } from '@/utils/dateFormat';
+import { formatMatchDateFull } from '@/utils/dateFormat';
 import { Match, Club } from '@/types';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StadiumTexture } from '@/components/StadiumTexture';
@@ -185,7 +185,7 @@ export default function HomeScreen() {
                           </Text>
                         ) : (
                           <Text style={[styles.statValue, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>
-                            {nextScheduled ? formatMatchDate(nextScheduled.matchDate) : 'Por agendar'}
+                            {nextScheduled ? formatMatchDateFull(nextScheduled.matchDate) : 'Por agendar'}
                           </Text>
                         )}
                       </View>
