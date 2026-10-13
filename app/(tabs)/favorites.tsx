@@ -13,7 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFavorites } from '@/context/FavoritesContext';
 import { useLiveMatches } from '@/hooks/useLiveMatches';
 import { useClubs } from '@/hooks/useClubs';
-import { MatchCard } from '@/components/MatchCard';
+import { MatchTabs } from '@/components/MatchTabs';
 import { ClubBadge } from '@/components/ClubBadge';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -86,11 +86,11 @@ export default function FavoritesScreen() {
             </Text>
 
             <View style={styles.matchesList}>
-              {favoriteMatches.length === 0 ? (
-                <Text style={styles.noMatchesText}>Sem partidas agendadas para os teus clubes.</Text>
-              ) : (
-                favoriteMatches.map((m) => <MatchCard key={m.id} match={m} />)
-              )}
+              <MatchTabs
+                matches={favoriteMatches}
+                emptyResults="Os teus clubes ainda não têm resultados."
+                emptyFixtures="Sem jogos agendados para os teus clubes."
+              />
             </View>
           </>
         )}

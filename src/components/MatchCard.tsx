@@ -6,6 +6,8 @@ import { Match } from '@/types';
 import { ScoreboardPlate } from './ScoreboardPlate';
 import { ClubBadgeLink } from './ClubBadgeLink';
 import { formatMatchDateFull } from '@/utils/dateFormat';
+import { currentMinute } from '@/utils/matchClock';
+import { useNow } from '@/hooks/useNow';
 import { setMatchTransitionOrigin, measureView } from '@/utils/matchTransitionOrigin';
 
 interface MatchCardProps {
@@ -16,6 +18,8 @@ export function MatchCard({ match }: MatchCardProps) {
   const router = useRouter();
   const isDark = useColorScheme() === 'dark';
   const isLive = match.status === 'live' || match.status === 'halftime';
+  const now = useNow(match.status === 'live');
+  const minute = currentMinute(match, now);
 
   const scoreboardRef = useRef<View>(null);
   const homeBadgeRef = useRef<View>(null);
@@ -62,7 +66,7 @@ export function MatchCard({ match }: MatchCardProps) {
           <View style={styles.liveBadge}>
             <View style={styles.liveDot} />
             <Text style={styles.liveText}>
-              {match.status === 'halftime' ? 'INT' : `${match.minute}'`}
+              {match.status === 'halftime' ? 'INT' : `${minute}'`}
             </Text>
           </View>
         )}
@@ -101,7 +105,7 @@ export function MatchCard({ match }: MatchCardProps) {
                 awayScore={match.awayScore}
                 size="small"
                 status={match.status}
-                minute={match.minute}
+                minute={minute}
               />
             </View>
           )}

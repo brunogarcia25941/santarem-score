@@ -15,7 +15,7 @@ import * as Haptics from 'expo-haptics';
 import { useClubs } from '@/hooks/useClubs';
 import { useFavorites } from '@/context/FavoritesContext';
 import { useLiveMatches } from '@/hooks/useLiveMatches';
-import { MatchCard } from '@/components/MatchCard';
+import { MatchTabs } from '@/components/MatchTabs';
 import { ClubBadge } from '@/components/ClubBadge';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -137,13 +137,11 @@ export default function ClubDetailScreen() {
         </Text>
 
         <View style={styles.matchesList}>
-          {clubMatches.length === 0 ? (
-            <Text style={{ textAlign: 'center', color: '#71717a', marginVertical: 20, fontSize: 13 }}>
-              Sem partidas agendadas ou terminadas para este clube.
-            </Text>
-          ) : (
-            clubMatches.map((m) => <MatchCard key={m.id} match={m} />)
-          )}
+          <MatchTabs
+            matches={clubMatches}
+            emptyResults="Este clube ainda não tem resultados."
+            emptyFixtures="Este clube não tem jogos agendados."
+          />
         </View>
       </ScrollView>
     </SafeAreaView>

@@ -45,7 +45,17 @@ export async function submitMatchEvent(event: MatchEventInput) {
     // aproveita para tentar despachá-los também.
     syncOfflineQueue().catch(() => {});
     return data;
-  } catch (err) {
+  } catch (err: any) {
+    // Erros devolvidos pela base de dados (tem `code`: sem permissão, jogo ainda
+    // não começou...) não se resolvem a tentar de novo — não vão para a fila.
+    // Só falhas de rede (sem `code`) ficam guardadas para reenvio.
+    if (typeof err?.code === 'string') {
+      throw new Error(
+        err.code === '42501'
+          ? 'Sem permissão, ou o jogo ainda não começou / já terminou.'
+          : err.message || 'Erro ao registar.'
+      );
+    }
     console.error('Erro na submissão do evento, a guardar localmente:', err);
     const queue = await getQueue();
     queue.push(event);
@@ -73,8 +83,9 @@ export async function syncOfflineQueue(): Promise<{ synced: number; remaining: n
     try {
       await insertEvent(event);
       synced++;
-    } catch (err) {
-      stillPending.push(event);
+    } catch (err: any) {
+      // Rejeição definitiva da base de dados: descarta em vez de insistir para sempre.
+      if (typeof err?.code !== 'string') stillPending.push(event);
     }
   }
 

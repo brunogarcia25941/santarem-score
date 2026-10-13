@@ -25,6 +25,8 @@ import { ScoreboardPlate } from '@/components/ScoreboardPlate';
 import { FlyInFromOrigin } from '@/components/FlyInFromOrigin';
 import { consumeMatchTransitionOrigin } from '@/utils/matchTransitionOrigin';
 import { formatMatchDateFull } from '@/utils/dateFormat';
+import { currentMinute } from '@/utils/matchClock';
+import { useNow } from '@/hooks/useNow';
 
 export default function MatchDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -39,6 +41,7 @@ export default function MatchDetailScreen() {
   const [loading, setLoading] = useState(!transitionOrigin?.initialMatch);
   const [isDelegadoModalVisible, setIsDelegadoModalVisible] = useState(false);
   const [isResultModalVisible, setIsResultModalVisible] = useState(false);
+  const now = useNow(match?.status === 'live');
 
   async function fetchMatchData() {
     if (!id) return;
@@ -54,6 +57,8 @@ export default function MatchDetailScreen() {
       away_score,
       status,
       minute,
+      period_started_at,
+      minute_offset,
       match_date,
       home_club:clubs!matches_home_club_id_fkey(*),
       away_club:clubs!matches_away_club_id_fkey(*)
@@ -72,6 +77,8 @@ export default function MatchDetailScreen() {
         awayScore: matchData.away_score,
         status: matchData.status,
         minute: matchData.minute,
+        periodStartedAt: matchData.period_started_at,
+        minuteOffset: matchData.minute_offset,
         matchDate: matchData.match_date,
       });
     }
@@ -156,7 +163,7 @@ export default function MatchDetailScreen() {
                   awayScore={match.awayScore}
                   size="large"
                   status={match.status}
-                  minute={match.minute}
+                  minute={currentMinute(match, now)}
                 />
               </FlyInFromOrigin>
               {match.status === 'finished' && (
@@ -189,7 +196,7 @@ export default function MatchDetailScreen() {
             }}
           >
             <Ionicons name="create-outline" size={18} color="#ffffff" />
-            <Text style={styles.delegadoBtnText}>Painel do Delegado (Registar Golo/Tempo)</Text>
+            <Text style={styles.delegadoBtnText}>Painel do Delegado</Text>
           </TouchableOpacity>
         ) : !session ? (
           <TouchableOpacity
@@ -301,10 +308,9 @@ export default function MatchDetailScreen() {
       <DelegadoPanelModal
         visible={isDelegadoModalVisible}
         match={match}
-        onClose={() => {
-          setIsDelegadoModalVisible(false);
-          fetchMatchData();
-        }}
+        events={events}
+        onChanged={fetchMatchData}
+        onClose={() => setIsDelegadoModalVisible(false)}
       />
 
       {isAdmin && (

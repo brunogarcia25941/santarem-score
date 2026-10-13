@@ -27,6 +27,8 @@ import Animated from 'react-native-reanimated';
 import { useSwipeableTabs } from '@/hooks/useSwipeableTabs';
 import { Ionicons } from '@expo/vector-icons';
 import { groupMatches, defaultGroupIndex } from '@/utils/matchGroups';
+import { currentMinute } from '@/utils/matchClock';
+import { useNow } from '@/hooks/useNow';
 
 const { width } = Dimensions.get('window');
 
@@ -53,6 +55,7 @@ export default function HomeScreen() {
   const { clubs } = useClubs();
   const { matches, loading } = useLiveMatches();
   const { getClubStanding } = useStandings();
+  const now = useNow(matches.some((m) => m.status === 'live'));
   const [selectedComp, setSelectedComp] = useState('Todas');
   const [activeCardIndex, setActiveCardIndex] = useState(0);
   // null = ainda não escolhida à mão, usa a jornada/semana atual
@@ -181,7 +184,7 @@ export default function HomeScreen() {
                         <Text style={[styles.statLabel, { color: isDark ? '#71717a' : '#a1a1aa' }]}>Próximo Jogo</Text>
                         {liveNow ? (
                           <Text style={[styles.statValue, { color: '#dc2626' }]}>
-                            AO VIVO {liveNow.minute ? `${liveNow.minute}'` : ''}
+                            AO VIVO {liveNow.status === 'halftime' ? 'INT' : `${currentMinute(liveNow, now) ?? ''}'`}
                           </Text>
                         ) : (
                           <Text style={[styles.statValue, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>

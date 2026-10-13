@@ -9,15 +9,15 @@ import {
   Switch,
   Alert,
   ScrollView,
-  KeyboardAvoidingView,
-  Platform,
   useColorScheme,
+  useWindowDimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Match } from '@/types';
 import { supabase } from '@/services/supabase';
 import { brand, getTheme } from '@/constants/theme';
+import { useKeyboardHeight } from '@/hooks/useKeyboardHeight';
 
 type EventType = 'GOAL' | 'OWN_GOAL' | 'YELLOW_CARD' | 'RED_CARD';
 
@@ -54,6 +54,8 @@ const EVENT_LABEL: Record<EventType, string> = {
 export function RegisterResultModal({ visible, match, existingEvents, onClose, onSaved }: Props) {
   const isDark = useColorScheme() === 'dark';
   const t = getTheme(isDark);
+  const keyboardHeight = useKeyboardHeight();
+  const { height: windowHeight } = useWindowDimensions();
 
   const [homeScore, setHomeScore] = useState('0');
   const [awayScore, setAwayScore] = useState('0');
@@ -176,11 +178,14 @@ export function RegisterResultModal({ visible, match, existingEvents, onClose, o
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <KeyboardAvoidingView
-        style={styles.overlay}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <View style={[styles.container, { backgroundColor: t.surface }]}>
+      {/* O painel sobe com o teclado (margem = altura do teclado) e a lista rola dentro do espaço que sobra. */}
+      <View style={[styles.overlay, { paddingBottom: keyboardHeight }]}>
+        <View
+          style={[
+            styles.container,
+            { backgroundColor: t.surface, maxHeight: Math.max(windowHeight - keyboardHeight - 40, 240) },
+          ]}
+        >
           <View style={styles.header}>
             <View style={{ flex: 1 }}>
               <Text style={[styles.title, { color: t.text }]}>Registar resultado</Text>
@@ -327,14 +332,14 @@ export function RegisterResultModal({ visible, match, existingEvents, onClose, o
             <Text style={styles.saveBtnText}>{saving ? 'A guardar…' : 'Guardar resultado'}</Text>
           </TouchableOpacity>
         </View>
-      </KeyboardAvoidingView>
+      </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
-  container: { borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, maxHeight: '92%' },
+  container: { borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20 },
   header: { flexDirection: 'row', alignItems: 'center', marginBottom: 14, gap: 12 },
   title: { fontSize: 18, fontWeight: '800' },
   subtitle: { fontSize: 13, marginTop: 2 },

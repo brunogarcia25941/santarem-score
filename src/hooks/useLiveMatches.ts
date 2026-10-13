@@ -18,6 +18,8 @@ export function useLiveMatches() {
         away_score,
         status,
         minute,
+        period_started_at,
+        minute_offset,
         match_date,
         home_club:clubs!matches_home_club_id_fkey(*),
         away_club:clubs!matches_away_club_id_fkey(*)
@@ -35,6 +37,8 @@ export function useLiveMatches() {
         awayScore: m.away_score,
         status: m.status,
         minute: m.minute,
+        periodStartedAt: m.period_started_at,
+        minuteOffset: m.minute_offset,
         matchDate: m.match_date,
       }));
       setMatches(formatted);

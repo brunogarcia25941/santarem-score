@@ -55,6 +55,17 @@ etc.
 - ✅ Emblemas de clubes são ligações para `/club/[id]` via
   `src/components/ClubBadgeLink.tsx` (usar sempre que um emblema aparece fora
   da própria ficha); na classificação e nos favoritos é a linha/chip inteira.
+- ✅ Relógio de jogo: o delegado inicia/termina as partes no painel (RPC
+  `set_match_period`, hora do servidor); `matches.period_started_at` +
+  `minute_offset` e os clientes calculam o minuto (`src/utils/matchClock.ts`,
+  `useNow`). Sem pushes de início/intervalo/fim ainda (switches do Perfil).
+- ✅ Painel do delegado: só regista golos/cartões com o jogo começado e não
+  terminado (RLS garante; admin isento, para o registo retroativo); lista com
+  apagar (corrige o marcador via trigger); sobe com o teclado
+  (`useKeyboardHeight`). Delegado de qualquer das duas equipas regista eventos
+  de ambas.
+- ✅ Ficha do clube e Favoritos: separadores Jogos (direto + agendados) /
+  Resultados (`MatchTabs`).
 - ✅ Notificações push de golos: Edge Function `send-goal-notification` +
   trigger `notify_on_goal_event` (via `pg_net`) + tabela `push_tokens` (RLS
   sem SELECT público) + registo do token em `src/services/pushNotifications.ts`,
@@ -196,6 +207,13 @@ assets/images/textures/ — grass-background.jpg e floodlights.jpg (fotos reais
   `DeviceNotRegistered`. `verify_jwt=true`; o trigger usa a chave anon.
   O `RealtimeGoalWatcher` (banner com a app aberta) segue a mesma regra e
   ignora jogos já `finished` (registo retroativo não é "direto").
+- `set_match_period(match_id, action)` (`start_first_half`, `end_first_half`,
+  `start_second_half`, `end_match`) — SECURITY INVOKER, valida a máquina de
+  estados; se o RLS impedir o UPDATE levanta "Sem permissão". Trigger
+  `revert_score_on_event_delete` desfaz o marcador ao apagar um golo (ignorado
+  no registo retroativo). `register_push_token`/`unregister_push_token` são
+  SECURITY DEFINER chamáveis por anon **de propósito** (avisos do advisor
+  esperados).
 - Triggers/funções: `update_match_score_on_event` (recalcula `home_score`/
   `away_score` quando se insere um `match_event` do tipo GOAL/OWN_GOAL —
   usado nos dados de teste), `notify_on_goal_event`, `handle_new_user`.
