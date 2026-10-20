@@ -66,6 +66,12 @@ etc.
   de ambas.
 - ✅ Ficha do clube e Favoritos: separadores Jogos (direto + agendados) /
   Resultados (`MatchTabs`).
+- ✅ Onze inicial: tabela `match_lineups` (número e/ou nome por jogador, máx.
+  11 por equipa, número único por equipa) + RPC `set_match_lineup` que
+  substitui o onze de UMA equipa. Delegado de qualquer das duas equipas (ou
+  admin) edita ambas; o editor (`LineupEditorModal`) só grava as equipas
+  alteradas. Mostrado em `LineupCard` na página do jogo, casa à esquerda e
+  visitante à direita; leitura pública e em tempo real.
 - ✅ Notificações push de golos: Edge Function `send-goal-notification` +
   trigger `notify_on_goal_event` (via `pg_net`) + tabela `push_tokens` (RLS
   sem SELECT público) + registo do token em `src/services/pushNotifications.ts`,

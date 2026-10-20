@@ -19,6 +19,8 @@ import { ClubBadgeLink } from '@/components/ClubBadgeLink';
 import { useAuth } from '@/context/AuthContext';
 import { DelegadoPanelModal } from '@/components/DelegadoPanelModal';
 import { RegisterResultModal } from '@/components/RegisterResultModal';
+import { LineupCard, LineupRow } from '@/components/LineupCard';
+import { LineupEditorModal } from '@/components/LineupEditorModal';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StadiumTexture } from '@/components/StadiumTexture';
 import { ScoreboardPlate } from '@/components/ScoreboardPlate';
@@ -38,6 +40,8 @@ export default function MatchDetailScreen() {
   const [transitionOrigin] = useState(() => consumeMatchTransitionOrigin());
   const [match, setMatch] = useState<Match | null>(transitionOrigin?.initialMatch ?? null);
   const [events, setEvents] = useState<any[]>([]);
+  const [lineups, setLineups] = useState<LineupRow[]>([]);
+  const [isLineupModalVisible, setIsLineupModalVisible] = useState(false);
   const [loading, setLoading] = useState(!transitionOrigin?.initialMatch);
   const [isDelegadoModalVisible, setIsDelegadoModalVisible] = useState(false);
   const [isResultModalVisible, setIsResultModalVisible] = useState(false);
@@ -93,6 +97,15 @@ export default function MatchDetailScreen() {
     if (eventData) {
       setEvents(eventData);
     }
+
+    const { data: lineupData } = await supabase
+      .from('match_lineups')
+      .select('id, club_id, shirt_number, player_name, sort_order')
+      .eq('match_id', id)
+      .order('sort_order', { ascending: true });
+    if (lineupData) {
+      setLineups(lineupData);
+    }
     setLoading(false);
   }
 
@@ -104,6 +117,7 @@ export default function MatchDetailScreen() {
       .channel(`match:${id}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'matches', filter: `id=eq.${id}` }, () => fetchMatchData())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'match_events', filter: `match_id=eq.${id}` }, () => fetchMatchData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'match_lineups', filter: `match_id=eq.${id}` }, () => fetchMatchData())
       .subscribe();
 
     return () => {
@@ -188,16 +202,30 @@ export default function MatchDetailScreen() {
 
         {/* Botão de Controlo de Delegado — só visível a quem tem permissão */}
         {canModerateClub(match.homeClub.id) || canModerateClub(match.awayClub.id) ? (
-          <TouchableOpacity
-            style={styles.delegadoBtn}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              setIsDelegadoModalVisible(true);
-            }}
-          >
-            <Ionicons name="create-outline" size={18} color="#ffffff" />
-            <Text style={styles.delegadoBtnText}>Painel do Delegado</Text>
-          </TouchableOpacity>
+          <>
+            <TouchableOpacity
+              style={styles.delegadoBtn}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setIsDelegadoModalVisible(true);
+              }}
+            >
+              <Ionicons name="create-outline" size={18} color="#ffffff" />
+              <Text style={styles.delegadoBtnText}>Painel do Delegado</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.delegadoBtn, { backgroundColor: '#3a3d42' }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setIsLineupModalVisible(true);
+              }}
+            >
+              <Ionicons name="people-outline" size={18} color="#ffffff" />
+              <Text style={styles.delegadoBtnText}>
+                {lineups.length > 0 ? 'Editar onze inicial' : 'Registar onze inicial'}
+              </Text>
+            </TouchableOpacity>
+          </>
         ) : !session ? (
           <TouchableOpacity
             style={styles.delegadoLoginBtn}
@@ -223,6 +251,8 @@ export default function MatchDetailScreen() {
             </Text>
           </TouchableOpacity>
         )}
+
+        {lineups.length > 0 && <LineupCard match={match} lineups={lineups} />}
 
         {/* Localização & GPS */}
         <View style={[styles.locationCard, { backgroundColor: isDark ? '#202226' : '#ffffff' }]}>
@@ -312,6 +342,16 @@ export default function MatchDetailScreen() {
         onChanged={fetchMatchData}
         onClose={() => setIsDelegadoModalVisible(false)}
       />
+
+      {(canModerateClub(match.homeClub.id) || canModerateClub(match.awayClub.id)) && (
+        <LineupEditorModal
+          visible={isLineupModalVisible}
+          match={match}
+          lineups={lineups}
+          onClose={() => setIsLineupModalVisible(false)}
+          onSaved={fetchMatchData}
+        />
+      )}
 
       {isAdmin && (
         <RegisterResultModal
