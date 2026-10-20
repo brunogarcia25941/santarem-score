@@ -10,7 +10,7 @@ import { GoalAlertBanner } from '@/components/GoalAlertBanner';
 import { vibrateGoal } from '@/services/notifications';
 import { supabase } from '@/services/supabase';
 import { syncOfflineQueue } from '@/services/matchActions';
-import { isPushEnabledLocally, syncPushToken } from '@/services/pushNotifications';
+import { anyPushEnabled, getPushPrefs, syncPushToken } from '@/services/pushNotifications';
 
 function RealtimeGoalWatcher() {
   const { favoriteClubIds } = useFavorites();
@@ -132,8 +132,8 @@ function PushTokenSync() {
   useEffect(() => {
     // Só ressincroniza (novo token ou novos favoritos) se o utilizador já
     // tinha ativado as notificações no Perfil — nunca pede permissão sozinho.
-    isPushEnabledLocally().then((enabled) => {
-      if (enabled) syncPushToken(favoriteClubIds);
+    getPushPrefs().then((prefs) => {
+      if (anyPushEnabled(prefs)) syncPushToken(favoriteClubIds, prefs);
     });
   }, [favoriteClubIds]);
 

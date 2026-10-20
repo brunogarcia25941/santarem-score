@@ -58,7 +58,14 @@ etc.
 - ✅ Relógio de jogo: o delegado inicia/termina as partes no painel (RPC
   `set_match_period`, hora do servidor); `matches.period_started_at` +
   `minute_offset` e os clientes calculam o minuto (`src/utils/matchClock.ts`,
-  `useNow`). Sem pushes de início/intervalo/fim ainda (switches do Perfil).
+  `useNow`).
+- ✅ Push de início e fim de jogo: trigger `notify_match_status` em `matches`
+  (scheduled/postponed→live = MATCH_START; live→finished = MATCH_END; o
+  registo retroativo nunca notifica). Preferências por aparelho em
+  `push_tokens.notify_goals/notify_start/notify_end` (golos por omissão; início
+  e fim opt-in), geridas pelos 3 switches do Perfil (`getPushPrefs`). O
+  "Início de Jogo" é o apito real, não um aviso 15 min antes (isso exigiria
+  agendamento, p.ex. pg_cron — não feito). Intervalo/2.ª parte não notificam.
 - ✅ Painel do delegado: só regista golos/cartões com o jogo começado e não
   terminado (RLS garante; admin isento, para o registo retroativo); lista com
   apagar (corrige o marcador via trigger); sobe com o teclado
@@ -206,9 +213,12 @@ assets/images/textures/ — grass-background.jpg e floodlights.jpg (fotos reais
   antigos. Existe política DELETE de admin em `match_events` para isto.
 - Edge Function `send-goal-notification` (só existe no projeto remoto, não
   há pasta local) — recebe o evento (`match_id, club_id, minute, player_name,
-  event_type, is_penalty`), lê o jogo (marcador + nomes) e notifica **quem
-  segue qualquer das duas equipas** do jogo (golo, autogolo, amarelo,
-  vermelho), não só o clube do evento. Duas consultas a `push_tokens` (uma
+  event_type, is_penalty`; para MATCH_START/MATCH_END só `match_id` e
+  `event_type`), lê o jogo (marcador + nomes) e notifica **quem segue
+  qualquer das duas equipas** do jogo e tem essa categoria ligada (golo,
+  autogolo, amarelo, vermelho, início, fim), não só o clube do evento.
+  Com a app aberta o handler suprime o push do sistema nos golos/cartões
+  (há banner próprio) mas mostra início/fim. Duas consultas a `push_tokens` (uma
   por clube) com dedupe por token — `.or()` com JSON é frágil. Limpa tokens
   `DeviceNotRegistered`. `verify_jwt=true`; o trigger usa a chave anon.
   O `RealtimeGoalWatcher` (banner com a app aberta) segue a mesma regra e

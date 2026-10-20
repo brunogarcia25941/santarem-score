@@ -16,9 +16,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/AuthContext';
 import { useFavorites } from '@/context/FavoritesContext';
 import {
+  PushPrefs,
+  anyPushEnabled,
   getPushPermissionStatus,
-  isPushEnabledLocally,
-  setPushEnabledLocally,
+  getPushPrefs,
+  setPushPrefs,
   syncPushToken,
   disablePushToken,
 } from '@/services/pushNotifications';
@@ -35,18 +37,20 @@ export default function ProfileScreen() {
   const { session, profile, signOut } = useAuth();
   const { favoriteClubIds } = useFavorites();
 
-  const [liveGoalNotifs, setLiveGoalNotifs] = useState(false);
+  const [prefs, setPrefs] = useState<PushPrefs>({ goals: false, start: false, end: false });
   const [togglingPush, setTogglingPush] = useState(false);
 
   useEffect(() => {
-    isPushEnabledLocally().then(setLiveGoalNotifs);
+    getPushPrefs().then(setPrefs);
   }, []);
 
-  const handleToggleLiveGoalNotifs = async (value: boolean) => {
+  const handleToggle = async (key: keyof PushPrefs, value: boolean) => {
+    const next = { ...prefs, [key]: value };
     setTogglingPush(true);
     try {
-      if (value) {
-        const ok = await syncPushToken(favoriteClubIds);
+      if (anyPushEnabled(next)) {
+        // Pede permissão (se ainda não há) e regista o aparelho com as preferências.
+        const ok = await syncPushToken(favoriteClubIds, next);
         if (!ok) {
           const status = await getPushPermissionStatus();
           Alert.alert(
@@ -61,13 +65,12 @@ export default function ProfileScreen() {
           setTogglingPush(false);
           return;
         }
-        await setPushEnabledLocally(true);
-        setLiveGoalNotifs(true);
       } else {
+        // Nada ligado: o aparelho deixa de estar registado.
         await disablePushToken();
-        await setPushEnabledLocally(false);
-        setLiveGoalNotifs(false);
       }
+      await setPushPrefs(next);
+      setPrefs(next);
     } finally {
       setTogglingPush(false);
     }
@@ -98,32 +101,32 @@ export default function ProfileScreen() {
           <View style={styles.settingRow}>
             <View style={styles.settingText}>
               <Text style={[styles.settingLabel, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>Golos em Direto</Text>
-              <Text style={styles.settingSub}>Notificar sempre que houver golo nos favoritos</Text>
+              <Text style={styles.settingSub}>Golos e cartões nos jogos dos teus clubes (de qualquer das equipas)</Text>
             </View>
-            <Switch value={liveGoalNotifs} onValueChange={handleToggleLiveGoalNotifs} disabled={togglingPush} />
+            <Switch value={prefs.goals} onValueChange={(v) => handleToggle('goals', v)} disabled={togglingPush} />
           </View>
 
           <View style={styles.divider} />
 
           <View style={styles.settingRow}>
             <View style={styles.settingText}>
-              <Text style={[styles.settingLabel, { color: isDark ? '#71717a' : '#a1a1aa' }]}>Início de Jogo</Text>
-              <Text style={styles.settingSub}>Avisar 15 minutos antes do apito inicial</Text>
+              <Text style={[styles.settingLabel, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>Início de Jogo</Text>
+              <Text style={styles.settingSub}>Avisar quando o jogo começar</Text>
             </View>
-            <Switch value={false} disabled />
+            <Switch value={prefs.start} onValueChange={(v) => handleToggle('start', v)} disabled={togglingPush} />
           </View>
 
           <View style={styles.divider} />
 
           <View style={styles.settingRow}>
             <View style={styles.settingText}>
-              <Text style={[styles.settingLabel, { color: isDark ? '#71717a' : '#a1a1aa' }]}>Resultado Final</Text>
-              <Text style={styles.settingSub}>Resumo no encerramento da partida</Text>
+              <Text style={[styles.settingLabel, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>Resultado Final</Text>
+              <Text style={styles.settingSub}>Resultado quando o jogo terminar</Text>
             </View>
-            <Switch value={false} disabled />
+            <Switch value={prefs.end} onValueChange={(v) => handleToggle('end', v)} disabled={togglingPush} />
           </View>
           <Text style={styles.notifsDisclaimer}>
-            "Início de Jogo" e "Resultado Final" ainda não estão disponíveis — só "Golos em Direto" está ativa.
+            Recebes avisos dos jogos dos clubes que tens nos favoritos.
           </Text>
         </View>
 

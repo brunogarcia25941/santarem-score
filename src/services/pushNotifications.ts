@@ -5,15 +5,36 @@ import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { supabase } from './supabase';
 
-const PUSH_ENABLED_KEY = '@santarem_score:push_enabled';
+const PUSH_PREFS_KEY = '@santarem_score:push_prefs';
+const LEGACY_PUSH_ENABLED_KEY = '@santarem_score:push_enabled'; // versão antiga: um só switch (golos)
 
-/** Preferência local (independente da permissão do sistema): o utilizador pediu para receber golos dos favoritos. */
-export async function isPushEnabledLocally(): Promise<boolean> {
-  return (await AsyncStorage.getItem(PUSH_ENABLED_KEY)) === 'true';
+/** O que o utilizador quer receber (independente da permissão do sistema). */
+export interface PushPrefs {
+  goals: boolean; // golos, autogolos e cartões
+  start: boolean; // início de jogo
+  end: boolean; // fim de jogo
 }
 
-export async function setPushEnabledLocally(enabled: boolean): Promise<void> {
-  await AsyncStorage.setItem(PUSH_ENABLED_KEY, enabled ? 'true' : 'false');
+const NO_PREFS: PushPrefs = { goals: false, start: false, end: false };
+
+export const anyPushEnabled = (p: PushPrefs) => p.goals || p.start || p.end;
+
+export async function getPushPrefs(): Promise<PushPrefs> {
+  const raw = await AsyncStorage.getItem(PUSH_PREFS_KEY);
+  if (raw) {
+    try {
+      return { ...NO_PREFS, ...JSON.parse(raw) };
+    } catch {
+      return NO_PREFS;
+    }
+  }
+  // Migração: quem tinha o switch antigo ligado mantém os golos.
+  const legacy = await AsyncStorage.getItem(LEGACY_PUSH_ENABLED_KEY);
+  return legacy === 'true' ? { ...NO_PREFS, goals: true } : NO_PREFS;
+}
+
+export async function setPushPrefs(prefs: PushPrefs): Promise<void> {
+  await AsyncStorage.setItem(PUSH_PREFS_KEY, JSON.stringify(prefs));
 }
 
 /**
@@ -25,15 +46,20 @@ export async function setPushEnabledLocally(enabled: boolean): Promise<void> {
  */
 
 Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    // Com a app aberta o RealtimeGoalWatcher já mostra o seu próprio banner;
-    // mostrar também o do sistema duplicava o aviso.
-    shouldShowAlert: false,
-    shouldPlaySound: false,
-    shouldSetBadge: false,
-    shouldShowBanner: false,
-    shouldShowList: false,
-  }),
+  handleNotification: async (notification) => {
+    // Com a app aberta o RealtimeGoalWatcher já mostra o seu próprio banner para
+    // golos e cartões (mostrar também o do sistema duplicava o aviso). Início e
+    // fim de jogo não têm banner próprio, por isso esses aparecem pelo sistema.
+    const type = notification.request.content.data?.type;
+    const show = type === 'MATCH_START' || type === 'MATCH_END';
+    return {
+      shouldShowAlert: show,
+      shouldPlaySound: false,
+      shouldSetBadge: false,
+      shouldShowBanner: show,
+      shouldShowList: show,
+    };
+  },
 });
 
 let cachedToken: string | null = null;
@@ -74,7 +100,7 @@ async function getExpoPushToken(): Promise<string | null> {
  * Pede permissão (se preciso) e sincroniza o token com os clubes favoritos
  * atuais. Chamado no arranque e sempre que os favoritos mudam.
  */
-export async function syncPushToken(favoriteClubIds: string[]): Promise<boolean> {
+export async function syncPushToken(favoriteClubIds: string[], prefs: PushPrefs): Promise<boolean> {
   const token = await getExpoPushToken();
   if (!token) return false;
 
@@ -84,6 +110,9 @@ export async function syncPushToken(favoriteClubIds: string[]): Promise<boolean>
     p_token: token,
     p_club_ids: favoriteClubIds,
     p_platform: Platform.OS,
+    p_notify_goals: prefs.goals,
+    p_notify_start: prefs.start,
+    p_notify_end: prefs.end,
   });
 
   if (error) {
