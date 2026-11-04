@@ -33,6 +33,11 @@ interface DelegadoPanelModalProps {
   onClose: () => void;
   /** Chamado depois de qualquer alteração, para o ecrã do jogo recarregar. */
   onChanged: () => void;
+  /** Abre o editor do onze inicial (o pai fecha este painel primeiro). */
+  onOpenLineup: () => void;
+  /** Texto do botão de registar/corrigir resultado; null quando esta pessoa não tem acesso. */
+  resultLabel: string | null;
+  onOpenResult: () => void;
 }
 
 const EVENT_LABEL: Record<string, string> = {
@@ -42,7 +47,16 @@ const EVENT_LABEL: Record<string, string> = {
   RED_CARD: '🟥 Vermelho',
 };
 
-export function DelegadoPanelModal({ visible, match, events, onClose, onChanged }: DelegadoPanelModalProps) {
+export function DelegadoPanelModal({
+  visible,
+  match,
+  events,
+  onClose,
+  onChanged,
+  onOpenLineup,
+  resultLabel,
+  onOpenResult,
+}: DelegadoPanelModalProps) {
   const isDark = useColorScheme() === 'dark';
   const t = getTheme(isDark);
   const keyboardHeight = useKeyboardHeight();
@@ -424,6 +438,22 @@ export function DelegadoPanelModal({ visible, match, events, onClose, onChanged 
               </View>
             )}
           </ScrollView>
+
+          {/* Atalhos para as outras zonas do delegado/admin. Escondidos com o teclado aberto para não roubarem espaço. */}
+          {keyboardHeight === 0 && (
+            <View style={[styles.footer, { borderTopColor: t.border }]}>
+              <TouchableOpacity style={[styles.footerBtn, { borderColor: t.border }]} onPress={onOpenLineup}>
+                <Ionicons name="people-outline" size={18} color={t.text} />
+                <Text style={[styles.footerBtnText, { color: t.text }]}>Onze inicial</Text>
+              </TouchableOpacity>
+              {resultLabel && (
+                <TouchableOpacity style={[styles.footerBtn, { borderColor: t.border }]} onPress={onOpenResult}>
+                  <Ionicons name="create-outline" size={18} color={t.text} />
+                  <Text style={[styles.footerBtnText, { color: t.text }]}>{resultLabel}</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
         </View>
       </View>
     </Modal>
@@ -462,4 +492,16 @@ const styles = StyleSheet.create({
   eventRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth },
   eventMinute: { width: 38, fontWeight: '800', fontSize: 13 },
   eventText: { flex: 1, fontSize: 13, fontWeight: '500' },
+  footer: { flexDirection: 'row', gap: 10, marginTop: 12, paddingTop: 12, borderTopWidth: StyleSheet.hairlineWidth },
+  footerBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    height: 44,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  footerBtnText: { fontSize: 13, fontWeight: '700' },
 });

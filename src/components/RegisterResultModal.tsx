@@ -36,6 +36,8 @@ interface Props {
   existingEvents: any[];
   onClose: () => void;
   onSaved: () => void;
+  /** Abre o editor do onze inicial (o pai fecha este modal primeiro). */
+  onOpenLineup: () => void;
 }
 
 const EVENT_LABEL: Record<EventType, string> = {
@@ -46,12 +48,13 @@ const EVENT_LABEL: Record<EventType, string> = {
 };
 
 /**
- * Registo retroativo de um jogo já realizado (só admin). O resultado é a
+ * Registar / corrigir o resultado de um jogo (admin sempre; delegado só até 1
+ * hora depois do fim — a base de dados é que garante). O resultado é a
  * verdade; os acontecimentos são opcionais e podem estar incompletos (ex.:
  * só se conhece um dos marcadores). A função SQL `admin_register_match_result`
  * grava tudo numa transação e não deixa os golos somarem duas vezes.
  */
-export function RegisterResultModal({ visible, match, existingEvents, onClose, onSaved }: Props) {
+export function RegisterResultModal({ visible, match, existingEvents, onClose, onSaved, onOpenLineup }: Props) {
   const isDark = useColorScheme() === 'dark';
   const t = getTheme(isDark);
   const keyboardHeight = useKeyboardHeight();
@@ -61,6 +64,8 @@ export function RegisterResultModal({ visible, match, existingEvents, onClose, o
   const [awayScore, setAwayScore] = useState('0');
   const [events, setEvents] = useState<DraftEvent[]>([]);
   const [saving, setSaving] = useState(false);
+  // Assinatura do que foi carregado ao abrir, para saber se há alterações por guardar.
+  const [initialSignature, setInitialSignature] = useState<string | null>(null);
 
   // Formulário de novo acontecimento
   const [clubId, setClubId] = useState(match.homeClub.id);
@@ -72,25 +77,43 @@ export function RegisterResultModal({ visible, match, existingEvents, onClose, o
   // Sempre que o modal abre, parte do estado atual do jogo em vez de valores antigos.
   useEffect(() => {
     if (!visible) return;
+    const loadedEvents: DraftEvent[] = [...existingEvents]
+      .sort((a, b) => a.minute - b.minute)
+      .map((e) => ({
+        clubId: e.club_id,
+        eventType: e.event_type as EventType,
+        minute: e.minute ?? 0,
+        playerName: e.player_name ?? '',
+        isPenalty: Boolean(e.is_penalty),
+      }));
     setHomeScore(String(match.homeScore ?? 0));
     setAwayScore(String(match.awayScore ?? 0));
-    setEvents(
-      [...existingEvents]
-        .sort((a, b) => a.minute - b.minute)
-        .map((e) => ({
-          clubId: e.club_id,
-          eventType: e.event_type as EventType,
-          minute: e.minute ?? 0,
-          playerName: e.player_name ?? '',
-          isPenalty: Boolean(e.is_penalty),
-        }))
-    );
+    setEvents(loadedEvents);
+    setInitialSignature(JSON.stringify([String(match.homeScore ?? 0), String(match.awayScore ?? 0), loadedEvents]));
     setClubId(match.homeClub.id);
     setEventType('GOAL');
     setMinute('');
     setPlayerName('');
     setIsPenalty(false);
   }, [visible, match.id]);
+
+  const dirty =
+    initialSignature !== null && JSON.stringify([homeScore, awayScore, events]) !== initialSignature;
+
+  // Um jogo ainda não terminado pode ser registado tal como está (ex.: 0-0); um terminado só se houver alterações.
+  const canSave = dirty || match.status !== 'finished';
+
+  // Fechar com alterações por guardar pede confirmação (agora o "Guardar" está no topo).
+  const confirmDiscard = (then: () => void) => {
+    if (!dirty) {
+      then();
+      return;
+    }
+    Alert.alert('Descartar alterações?', 'Há alterações por guardar que vão perder-se.', [
+      { text: 'Continuar a editar', style: 'cancel' },
+      { text: 'Descartar', style: 'destructive', onPress: then },
+    ]);
+  };
 
   const clubName = (id: string) =>
     id === match.homeClub.id ? match.homeClub.shortName : match.awayClub.shortName;
@@ -177,7 +200,7 @@ export function RegisterResultModal({ visible, match, existingEvents, onClose, o
   const inputStyle = [styles.input, { color: t.text, borderColor: t.border, backgroundColor: t.base }];
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={() => confirmDiscard(onClose)}>
       {/* O painel sobe com o teclado (margem = altura do teclado) e a lista rola dentro do espaço que sobra. */}
       <View style={[styles.overlay, { paddingBottom: keyboardHeight }]}>
         <View
@@ -188,12 +211,21 @@ export function RegisterResultModal({ visible, match, existingEvents, onClose, o
         >
           <View style={styles.header}>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.title, { color: t.text }]}>Registar resultado</Text>
-              <Text style={[styles.subtitle, { color: t.textMuted }]}>
+              <Text style={[styles.title, { color: t.text }]}>
+                {match.status === 'finished' ? 'Corrigir resultado' : 'Registar resultado'}
+              </Text>
+              <Text style={[styles.subtitle, { color: t.textMuted }]} numberOfLines={1}>
                 {match.round} • {match.homeClub.shortName} vs {match.awayClub.shortName}
               </Text>
             </View>
-            <TouchableOpacity onPress={onClose} hitSlop={10}>
+            <TouchableOpacity
+              style={[styles.saveBtn, (saving || !canSave) && { opacity: 0.5 }]}
+              onPress={save}
+              disabled={saving || !canSave}
+            >
+              <Text style={styles.saveBtnText}>{saving ? 'A guardar…' : 'Guardar'}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => confirmDiscard(onClose)} hitSlop={10}>
               <Ionicons name="close" size={24} color={t.text} />
             </TouchableOpacity>
           </View>
@@ -230,6 +262,15 @@ export function RegisterResultModal({ visible, match, existingEvents, onClose, o
                 />
               </View>
             </View>
+
+            <TouchableOpacity
+              style={[styles.lineupBtn, { borderColor: t.border }]}
+              onPress={() => confirmDiscard(onOpenLineup)}
+            >
+              <Ionicons name="people-outline" size={18} color={t.text} />
+              <Text style={[styles.lineupBtnText, { color: t.text }]}>Onze inicial</Text>
+              <Ionicons name="chevron-forward" size={16} color={t.textMuted} />
+            </TouchableOpacity>
 
             {/* Acontecimentos já adicionados */}
             <Text style={[styles.label, { color: t.textMuted, marginTop: 20 }]}>
@@ -317,19 +358,13 @@ export function RegisterResultModal({ visible, match, existingEvents, onClose, o
                 </View>
               )}
 
-              <TouchableOpacity style={[styles.addBtn, { borderColor: brand.forest }]} onPress={addEvent}>
-                <Ionicons name="add" size={18} color={brand.forest} />
-                <Text style={[styles.addBtnText, { color: brand.forest }]}>Adicionar acontecimento</Text>
-              </TouchableOpacity>
             </View>
           </ScrollView>
 
-          <TouchableOpacity
-            style={[styles.saveBtn, saving && { opacity: 0.6 }]}
-            onPress={save}
-            disabled={saving}
-          >
-            <Text style={styles.saveBtnText}>{saving ? 'A guardar…' : 'Guardar resultado'}</Text>
+          {/* Fixo em baixo, onde o polegar espera o botão principal: adicionar o acontecimento do formulário. */}
+          <TouchableOpacity style={styles.addBtn} onPress={addEvent}>
+            <Ionicons name="add" size={20} color="#fff" />
+            <Text style={styles.addBtnText}>Adicionar acontecimento</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -373,18 +408,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    height: 42,
-    borderRadius: 10,
-    borderWidth: 1.5,
-  },
-  addBtnText: { fontWeight: '700', fontSize: 13 },
-  saveBtn: {
-    backgroundColor: brand.forest,
     height: 50,
     borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: brand.forest,
     marginTop: 10,
   },
-  saveBtnText: { color: '#fff', fontWeight: '800', fontSize: 15 },
+  addBtnText: { color: '#fff', fontWeight: '800', fontSize: 15 },
+  saveBtn: {
+    backgroundColor: brand.amberDeep,
+    paddingHorizontal: 14,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  saveBtnText: { color: '#fff', fontWeight: '800', fontSize: 13 },
+  lineupBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 18,
+    paddingHorizontal: 14,
+    height: 44,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  lineupBtnText: { flex: 1, fontSize: 14, fontWeight: '600' },
 });

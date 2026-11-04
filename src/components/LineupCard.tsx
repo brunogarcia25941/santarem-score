@@ -9,6 +9,7 @@ export interface LineupRow {
   shirt_number: number | null;
   player_name: string | null;
   sort_order: number;
+  is_goalkeeper: boolean;
 }
 
 interface Props {
@@ -39,6 +40,9 @@ export function LineupCard({ match, lineups }: Props) {
         <Text style={[styles.empty, { color: t.textFaint, textAlign: align }]}>Por indicar</Text>
       ) : (
         rows.map((p) => {
+          const gk = p.is_goalkeeper ? (
+            <Text style={[styles.gkTag, { color: brand.amberDeep, borderColor: brand.amber }]}>GR</Text>
+          ) : null;
           const number = (
             <Text style={[styles.number, { color: brand.amber, textAlign: align }]}>
               {p.shirt_number ?? ''}
@@ -55,9 +59,11 @@ export function LineupCard({ match, lineups }: Props) {
                 <>
                   {number}
                   {name}
+                  {gk}
                 </>
               ) : (
                 <>
+                  {gk}
                   {name}
                   {number}
                 </>
@@ -90,4 +96,5 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 4 },
   number: { width: 26, fontSize: 14, fontWeight: '800' },
   name: { flex: 1, fontSize: 14, fontWeight: '500' },
+  gkTag: { fontSize: 10, fontWeight: '800', borderWidth: 1, borderRadius: 4, paddingHorizontal: 4, paddingVertical: 1 },
 });

@@ -20,6 +20,7 @@ export function useLiveMatches() {
         minute,
         period_started_at,
         minute_offset,
+        finished_at,
         match_date,
         home_club:clubs!matches_home_club_id_fkey(*),
         away_club:clubs!matches_away_club_id_fkey(*)
@@ -39,6 +40,7 @@ export function useLiveMatches() {
         minute: m.minute,
         periodStartedAt: m.period_started_at,
         minuteOffset: m.minute_offset,
+        finishedAt: m.finished_at,
         matchDate: m.match_date,
       }));
       setMatches(formatted);

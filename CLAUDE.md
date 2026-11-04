@@ -73,6 +73,19 @@ etc.
   de ambas.
 - ✅ Ficha do clube e Favoritos: separadores Jogos (direto + agendados) /
   Resultados (`MatchTabs`).
+- ✅ Quem pode corrigir: **admin sempre**; **delegado só até 1 hora depois do
+  fim do jogo** (`matches.finished_at`, hora do servidor, preenchida por
+  `set_match_period('end_match')`). Jogos terminados à mão (sem `finished_at`)
+  ficam só para o admin. Regra única em `moderator_window_open()` usada pelas
+  policies de `matches` (UPDATE), `match_events` e `match_lineups`, e em
+  `admin_register_match_result`/`set_match_lineup`. No cliente:
+  `src/utils/matchAccess.ts` (só decide o que mostrar). A página do jogo tem UM
+  botão ("Painel do Delegado", escondido ao delegado passada a hora); o onze
+  inicial e o registar/corrigir resultado abrem a partir de dentro do painel
+  (e o ecrã de resultado também abre o onze). Os modais não se empilham: o
+  painel fecha-se primeiro (`openFromPanel`).
+- ✅ No ecrã de resultado o botão fixo de baixo é "Adicionar acontecimento";
+  "Guardar" está no topo e fechar com alterações pede confirmação.
 - ✅ Onze inicial: tabela `match_lineups` (número e/ou nome por jogador, máx.
   11 por equipa, número único por equipa) + RPC `set_match_lineup` que
   substitui o onze de UMA equipa. Delegado de qualquer das duas equipas (ou
@@ -420,6 +433,15 @@ partiu tudo com `installUIRuntimeBindings is not a function` — se isto
 voltar a acontecer, correr `npx expo install react-native-gesture-handler`
 (nunca fazer upgrade manual para v3 sem testar bem em Expo Go primeiro, ou
 sem migrar para uma dev build).
+
+## Git
+
+O repositório local tinha `user.name/email` no `.git/config` com o Gmail do
+Bruno, que **não** está associado à conta GitHub `brunogarcia25941`, por isso
+os commits apareciam como "Bruno Garcia" sem ligação à conta. Passou a usar o
+endereço noreply da conta (`188444927+brunogarcia25941@users.noreply.github.com`),
+que liga sempre ao utilizador. Commits anteriores (até `95b96e0`) mantêm o
+email antigo.
 
 ## Convenções de código
 

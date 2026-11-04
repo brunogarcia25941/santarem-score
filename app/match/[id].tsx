@@ -29,6 +29,7 @@ import { consumeMatchTransitionOrigin } from '@/utils/matchTransitionOrigin';
 import { formatMatchDateFull } from '@/utils/dateFormat';
 import { currentMinute } from '@/utils/matchClock';
 import { useNow } from '@/hooks/useNow';
+import { canUsePanel, canEditResult } from '@/utils/matchAccess';
 
 export default function MatchDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -45,7 +46,7 @@ export default function MatchDetailScreen() {
   const [loading, setLoading] = useState(!transitionOrigin?.initialMatch);
   const [isDelegadoModalVisible, setIsDelegadoModalVisible] = useState(false);
   const [isResultModalVisible, setIsResultModalVisible] = useState(false);
-  const now = useNow(match?.status === 'live');
+  const now = useNow(match?.status === 'live' || (match?.status === 'finished' && Boolean(match.finishedAt)));
 
   async function fetchMatchData() {
     if (!id) return;
@@ -63,6 +64,7 @@ export default function MatchDetailScreen() {
       minute,
       period_started_at,
       minute_offset,
+      finished_at,
       match_date,
       home_club:clubs!matches_home_club_id_fkey(*),
       away_club:clubs!matches_away_club_id_fkey(*)
@@ -83,6 +85,7 @@ export default function MatchDetailScreen() {
         minute: matchData.minute,
         periodStartedAt: matchData.period_started_at,
         minuteOffset: matchData.minute_offset,
+        finishedAt: matchData.finished_at,
         matchDate: matchData.match_date,
       });
     }
@@ -100,7 +103,7 @@ export default function MatchDetailScreen() {
 
     const { data: lineupData } = await supabase
       .from('match_lineups')
-      .select('id, club_id, shirt_number, player_name, sort_order')
+      .select('id, club_id, shirt_number, player_name, sort_order, is_goalkeeper')
       .eq('match_id', id)
       .order('sort_order', { ascending: true });
     if (lineupData) {
@@ -124,6 +127,19 @@ export default function MatchDetailScreen() {
       supabase.removeChannel(matchChannel);
     };
   }, [id]);
+
+  // Quem pode o quê (a base de dados é que garante; isto decide o que mostrar).
+  const isDelegate = !isAdmin && Boolean(match && (canModerateClub(match.homeClub.id) || canModerateClub(match.awayClub.id)));
+  const role = { isAdmin, isDelegate };
+  const panelAllowed = Boolean(match && canUsePanel(match, role, now));
+  const resultAllowed = Boolean(match && canEditResult(match, role, now));
+
+  // Abrir um modal a partir do painel: fecha-se o painel primeiro e abre-se o outro logo a seguir
+  // (dois modais em simultâneo falham no Android).
+  const openFromPanel = (open: (v: boolean) => void) => {
+    setIsDelegadoModalVisible(false);
+    setTimeout(() => open(true), 350);
+  };
 
   if (loading || !match) {
     return (
@@ -200,32 +216,19 @@ export default function MatchDetailScreen() {
           </View>
         </View>
 
-        {/* Botão de Controlo de Delegado — só visível a quem tem permissão */}
-        {canModerateClub(match.homeClub.id) || canModerateClub(match.awayClub.id) ? (
-          <>
-            <TouchableOpacity
-              style={styles.delegadoBtn}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setIsDelegadoModalVisible(true);
-              }}
-            >
-              <Ionicons name="create-outline" size={18} color="#ffffff" />
-              <Text style={styles.delegadoBtnText}>Painel do Delegado</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.delegadoBtn, { backgroundColor: '#3a3d42' }]}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setIsLineupModalVisible(true);
-              }}
-            >
-              <Ionicons name="people-outline" size={18} color="#ffffff" />
-              <Text style={styles.delegadoBtnText}>
-                {lineups.length > 0 ? 'Editar onze inicial' : 'Registar onze inicial'}
-              </Text>
-            </TouchableOpacity>
-          </>
+        {/* Ponto de entrada de quem gere o jogo. Onze inicial e registar/corrigir resultado
+            estão dentro do painel. O delegado perde o acesso 1 hora depois do fim; o admin nunca. */}
+        {panelAllowed ? (
+          <TouchableOpacity
+            style={styles.delegadoBtn}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setIsDelegadoModalVisible(true);
+            }}
+          >
+            <Ionicons name="create-outline" size={18} color="#ffffff" />
+            <Text style={styles.delegadoBtnText}>Painel do Delegado</Text>
+          </TouchableOpacity>
         ) : !session ? (
           <TouchableOpacity
             style={styles.delegadoLoginBtn}
@@ -235,22 +238,6 @@ export default function MatchDetailScreen() {
             <Text style={styles.delegadoLoginBtnText}>Sou delegado deste jogo — iniciar sessão</Text>
           </TouchableOpacity>
         ) : null}
-
-        {/* Registo retroativo de jogos já realizados — só admin */}
-        {isAdmin && (
-          <TouchableOpacity
-            style={[styles.delegadoBtn, { backgroundColor: '#d97706' }]}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              setIsResultModalVisible(true);
-            }}
-          >
-            <Ionicons name="checkmark-done-outline" size={18} color="#ffffff" />
-            <Text style={styles.delegadoBtnText}>
-              {match.status === 'finished' ? 'Corrigir resultado (Admin)' : 'Registar resultado (Admin)'}
-            </Text>
-          </TouchableOpacity>
-        )}
 
         {lineups.length > 0 && <LineupCard match={match} lineups={lineups} />}
 
@@ -335,32 +322,41 @@ export default function MatchDetailScreen() {
       </ScrollView>
 
       {/* Modal de Gestão */}
-      <DelegadoPanelModal
-        visible={isDelegadoModalVisible}
-        match={match}
-        events={events}
-        onChanged={fetchMatchData}
-        onClose={() => setIsDelegadoModalVisible(false)}
-      />
+      {panelAllowed && (
+        <>
+          <DelegadoPanelModal
+            visible={isDelegadoModalVisible}
+            match={match}
+            events={events}
+            onChanged={fetchMatchData}
+            onClose={() => setIsDelegadoModalVisible(false)}
+            onOpenLineup={() => openFromPanel(setIsLineupModalVisible)}
+            resultLabel={resultAllowed ? (match.status === 'finished' ? 'Corrigir resultado' : 'Registar resultado') : null}
+            onOpenResult={() => openFromPanel(setIsResultModalVisible)}
+          />
 
-      {(canModerateClub(match.homeClub.id) || canModerateClub(match.awayClub.id)) && (
-        <LineupEditorModal
-          visible={isLineupModalVisible}
-          match={match}
-          lineups={lineups}
-          onClose={() => setIsLineupModalVisible(false)}
-          onSaved={fetchMatchData}
-        />
-      )}
+          <LineupEditorModal
+            visible={isLineupModalVisible}
+            match={match}
+            lineups={lineups}
+            onClose={() => setIsLineupModalVisible(false)}
+            onSaved={fetchMatchData}
+          />
 
-      {isAdmin && (
-        <RegisterResultModal
-          visible={isResultModalVisible}
-          match={match}
-          existingEvents={events}
-          onClose={() => setIsResultModalVisible(false)}
-          onSaved={fetchMatchData}
-        />
+          {resultAllowed && (
+            <RegisterResultModal
+              visible={isResultModalVisible}
+              match={match}
+              existingEvents={events}
+              onClose={() => setIsResultModalVisible(false)}
+              onSaved={fetchMatchData}
+              onOpenLineup={() => {
+                setIsResultModalVisible(false);
+                setTimeout(() => setIsLineupModalVisible(true), 350);
+              }}
+            />
+          )}
+        </>
       )}
     </SafeAreaView>
   );

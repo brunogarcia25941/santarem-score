@@ -22,10 +22,12 @@ import { LineupRow } from './LineupCard';
 interface DraftPlayer {
   number: string;
   name: string;
+  /** Guarda-redes (no máximo um por equipa). */
+  gk: boolean;
 }
 
 const SLOTS = 11;
-const emptyDraft = (): DraftPlayer[] => Array.from({ length: SLOTS }, () => ({ number: '', name: '' }));
+const emptyDraft = (): DraftPlayer[] => Array.from({ length: SLOTS }, () => ({ number: '', name: '', gk: false }));
 
 interface Props {
   visible: boolean;
@@ -39,7 +41,7 @@ interface Props {
 /** Jogadores preenchidos (com número e/ou nome), pela ordem das linhas. */
 const filled = (draft: DraftPlayer[]) => draft.filter((p) => p.number.trim() !== '' || p.name.trim() !== '');
 const serialize = (draft: DraftPlayer[]) =>
-  JSON.stringify(filled(draft).map((p) => [p.number.trim(), p.name.trim()]));
+  JSON.stringify(filled(draft).map((p) => [p.number.trim(), p.name.trim(), p.gk]));
 
 /**
  * Editor do onze inicial. Pode preencher-se só uma equipa ou as duas, e cada
@@ -67,8 +69,14 @@ export function LineupEditorModal({ visible, match, lineups, onClose, onSaved }:
       const rows = lineups
         .filter((l) => l.club_id === c.id)
         .sort((a, b) => a.sort_order - b.sort_order)
-        .map((l) => ({ number: l.shirt_number?.toString() ?? '', name: l.player_name ?? '' }));
+        .map((l) => ({
+          number: l.shirt_number?.toString() ?? '',
+          name: l.player_name ?? '',
+          gk: Boolean(l.is_goalkeeper),
+        }));
       const draft = [...rows, ...emptyDraft()].slice(0, SLOTS);
+      // Equipa ainda sem onze: por convenção o 1.º jogador é o guarda-redes (pode mudar-se).
+      if (rows.length === 0) draft[0] = { ...draft[0], gk: true };
       next[c.id] = draft;
       signatures[c.id] = serialize(draft);
     }
@@ -79,7 +87,15 @@ export function LineupEditorModal({ visible, match, lineups, onClose, onSaved }:
 
   const draft = drafts[clubId] ?? emptyDraft();
 
-  const update = (index: number, field: keyof DraftPlayer, value: string) => {
+  const toggleGoalkeeper = (index: number) => {
+    Haptics.selectionAsync();
+    setDrafts((prev) => ({
+      ...prev,
+      [clubId]: (prev[clubId] ?? emptyDraft()).map((p, i) => ({ ...p, gk: i === index ? !p.gk : false })),
+    }));
+  };
+
+  const update = (index: number, field: 'number' | 'name', value: string) => {
     const cleaned = field === 'number' ? value.replace(/[^0-9]/g, '').slice(0, 2) : value;
     setDrafts((prev) => ({
       ...prev,
@@ -108,6 +124,7 @@ export function LineupEditorModal({ visible, match, lineups, onClose, onSaved }:
         p_players: filled(drafts[c.id]).map((p) => ({
           number: p.number.trim() === '' ? null : parseInt(p.number, 10),
           name: p.name.trim() || null,
+          goalkeeper: p.gk,
         })),
       });
       if (error) {
@@ -171,8 +188,9 @@ export function LineupEditorModal({ visible, match, lineups, onClose, onSaved }:
           </View>
 
           <Text style={[styles.hint, { color: t.textFaint }]}>
-            Preenche o que souberes: só números, só nomes, ou os dois. Podes deixar uma equipa por preencher — o
-            delegado dela (ou tu, mais tarde) pode completar.
+            Preenche o que souberes: só números, só nomes, ou os dois. O 1.º jogador é o guarda-redes (GR) — toca em
+            GR noutra linha para mudar. Podes deixar uma equipa por preencher: o delegado dela (ou tu, mais tarde)
+            pode completar.
           </Text>
 
           <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
@@ -196,6 +214,17 @@ export function LineupEditorModal({ visible, match, lineups, onClose, onSaved }:
                   onChangeText={(v) => update(i, 'name', v)}
                   maxLength={60}
                 />
+                <TouchableOpacity
+                  style={[
+                    styles.gkBtn,
+                    { borderColor: t.border },
+                    p.gk && { borderColor: brand.amber, backgroundColor: brand.amberGlow },
+                  ]}
+                  onPress={() => toggleGoalkeeper(i)}
+                  accessibilityLabel="Guarda-redes"
+                >
+                  <Text style={[styles.gkBtnText, { color: p.gk ? brand.amberDeep : t.textFaint }]}>GR</Text>
+                </TouchableOpacity>
               </View>
             ))}
           </ScrollView>
@@ -235,6 +264,8 @@ const styles = StyleSheet.create({
   index: { width: 18, fontSize: 12, fontWeight: '700', textAlign: 'right' },
   input: { borderWidth: 1, borderRadius: 8, paddingHorizontal: 12, height: 42, fontSize: 14 },
   numberInput: { width: 62, textAlign: 'center', fontWeight: '700' },
+  gkBtn: { width: 40, height: 42, borderRadius: 8, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
+  gkBtnText: { fontSize: 12, fontWeight: '800' },
   saveBtn: { backgroundColor: brand.forest, height: 50, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginTop: 10 },
   saveBtnText: { color: '#fff', fontWeight: '800', fontSize: 15 },
 });
