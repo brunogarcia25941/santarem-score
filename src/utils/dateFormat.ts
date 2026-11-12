@@ -54,3 +54,23 @@ export function formatMatchDateFull(iso: string | null | undefined): string {
 
   return `${weekday.charAt(0).toUpperCase() + weekday.slice(1)}, ${day} ${month} ${year} · ${time}`;
 }
+
+/** Dia por extenso para cartazes: "domingo, 20 de setembro de 2026" (fuso de Lisboa). */
+export function formatMatchDayLong(iso: string): string {
+  const date = new Date(iso);
+  if (isNaN(date.getTime())) return iso;
+  return new Intl.DateTimeFormat('pt-PT', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'Europe/Lisbon',
+  }).format(date);
+}
+
+/** Só a hora: "16:00" (fuso de Lisboa). */
+export function formatMatchTime(iso: string): string {
+  const date = new Date(iso);
+  if (isNaN(date.getTime())) return '';
+  return new Intl.DateTimeFormat('pt-PT', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Lisbon' }).format(date);
+}

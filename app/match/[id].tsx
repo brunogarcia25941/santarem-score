@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -30,6 +30,10 @@ import { formatMatchDateFull } from '@/utils/dateFormat';
 import { currentMinute } from '@/utils/matchClock';
 import { useNow } from '@/hooks/useNow';
 import { canUsePanel, canEditResult } from '@/utils/matchAccess';
+import { captureRef } from 'react-native-view-shot';
+import * as Sharing from 'expo-sharing';
+import { Alert } from 'react-native';
+import { MatchShareCard } from '@/components/MatchShareCard';
 
 export default function MatchDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -128,6 +132,54 @@ export default function MatchDetailScreen() {
     };
   }, [id]);
 
+  // Partilhar o jogo como imagem: o cartaz só é desenhado (fora do ecrã) enquanto se partilha;
+  // espera-se que os dois emblemas carreguem antes de capturar, senão saíam em branco.
+  const shareCardRef = useRef<View>(null);
+  const [sharing, setSharing] = useState(false);
+  const badgesReady = useRef(0);
+
+  const startShare = async () => {
+    if (sharing) return;
+    if (!(await Sharing.isAvailableAsync())) {
+      Alert.alert('Partilha indisponível', 'Este aparelho não permite partilhar imagens.');
+      return;
+    }
+    Haptics.selectionAsync();
+    badgesReady.current = 0;
+    setSharing(true);
+  };
+
+  const captureAndShare = async () => {
+    try {
+      // Pequena folga para o fundo e o texto assentarem antes da captura.
+      await new Promise((r) => setTimeout(r, 250));
+      const uri = await captureRef(shareCardRef, { format: 'png', quality: 1, width: 1080, height: 1350, result: 'tmpfile' });
+      await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: 'Partilhar jogo' });
+    } catch {
+      Alert.alert('Erro', 'Não foi possível criar a imagem para partilhar.');
+    } finally {
+      setSharing(false);
+    }
+  };
+
+  const onBadgeSettled = () => {
+    badgesReady.current += 1;
+    if (badgesReady.current === 2) captureAndShare();
+  };
+
+  // Rede de segurança: se um emblema nunca responder, captura-se na mesma ao fim de 5 s.
+  useEffect(() => {
+    if (!sharing) return;
+    const t = setTimeout(() => {
+      if (badgesReady.current < 2) {
+        badgesReady.current = 2;
+        captureAndShare();
+      }
+    }, 5000);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sharing]);
+
   // Quem pode o quê (a base de dados é que garante; isto decide o que mostrar).
   const isDelegate = !isAdmin && Boolean(match && (canModerateClub(match.homeClub.id) || canModerateClub(match.awayClub.id)));
   const role = { isAdmin, isDelegate };
@@ -165,6 +217,19 @@ export default function MatchDetailScreen() {
       <ScrollView contentContainerStyle={styles.content}>
         {/* Placar de Jogo */}
         <View style={[styles.scoreCard, { backgroundColor: isDark ? '#202226' : '#ffffff' }]}>
+          <TouchableOpacity
+            style={styles.shareBtn}
+            onPress={startShare}
+            disabled={sharing}
+            accessibilityLabel="Partilhar jogo"
+            hitSlop={10}
+          >
+            {sharing ? (
+              <ActivityIndicator size="small" color="#2f6b4a" />
+            ) : (
+              <Ionicons name="share-social-outline" size={22} color={isDark ? '#a1a1aa' : '#52525b'} />
+            )}
+          </TouchableOpacity>
           <Text style={[styles.competitionText, { color: isDark ? '#a1a1aa' : '#71717a' }]}>
             {match.competition} • {match.round}
           </Text>
@@ -321,6 +386,18 @@ export default function MatchDetailScreen() {
         </View>
       </ScrollView>
 
+      {/* Cartaz para partilhar: desenhado fora do ecrã só enquanto se cria a imagem */}
+      {sharing && (
+        <View pointerEvents="none" style={{ position: 'absolute', left: -2000, top: 0 }}>
+          <MatchShareCard
+            ref={shareCardRef}
+            match={match}
+            minute={currentMinute(match, now)}
+            onBadgeSettled={onBadgeSettled}
+          />
+        </View>
+      )}
+
       {/* Modal de Gestão */}
       {panelAllowed && (
         <>
@@ -363,6 +440,7 @@ export default function MatchDetailScreen() {
 }
 
 const styles = StyleSheet.create({
+  shareBtn: { position: 'absolute', top: 12, right: 12, zIndex: 5 },
   container: { flex: 1 },
   content: { padding: 16 },
   scoreCard: {

@@ -75,6 +75,12 @@ etc.
   golos por jogo, jogos sem sofrer, maior vitória/derrota, cartões. Calculado no
   cliente a partir dos jogos terminados. Não há melhores marcadores de propósito:
   os delegados nem sempre indicam o jogador do golo.
+- ✅ Partilhar jogo como imagem: ícone no cartão do placar (`app/match/[id].tsx`)
+  → `MatchShareCard` (cartaz 4:5, fundo floodlights + gradiente verde, divisão/
+  série/jornada, emblemas; ao centro hora (agendado), resultado + minuto (direto)
+  ou resultado final) desenhado fora do ecrã só durante a partilha, capturado
+  com `react-native-view-shot` a 1080×1350 depois de os 2 emblemas carregarem, e
+  enviado com `expo-sharing`. Módulos nativos novos → exige nova build.
 - ✅ Painel do delegado: só regista golos/cartões com o jogo começado e não
   terminado (RLS garante; admin isento, para o registo retroativo); lista com
   apagar (corrige o marcador via trigger); sobe com o teclado
