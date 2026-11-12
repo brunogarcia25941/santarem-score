@@ -81,6 +81,11 @@ etc.
   ou resultado final) desenhado fora do ecrã só durante a partilha, capturado
   com `react-native-view-shot` a 1080×1350 depois de os 2 emblemas carregarem, e
   enviado com `expo-sharing`. Módulos nativos novos → exige nova build.
+- ✅ Logótipos: `assets/images/app-logo.png` é o logótipo da app (de onde saem
+  `icon.png`, os `android-icon-*`, `splash-icon.png` e `favicon.png`, gerados com
+  Pillow; fundo do ícone/splash `#0c1326`); `af-santarem.png` é o da AF Santarém
+  (aparece no canto superior esquerdo do cartaz de partilha). Mudar o ícone exige
+  nova build.
 - ✅ Painel do delegado: só regista golos/cartões com o jogo começado e não
   terminado (RLS garante; admin isento, para o registo retroativo); lista com
   apagar (corrige o marcador via trigger); sobe com o teclado

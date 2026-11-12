@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ImageBackground } from 'react-native';
+import { View, Text, StyleSheet, ImageBackground, Image as RNImage } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Club, Match } from '@/types';
@@ -86,6 +86,8 @@ export const MatchShareCard = React.forwardRef<View, Props>(function MatchShareC
 
       {/* Cabeçalho */}
       <View style={styles.header}>
+        {/* Logótipo da AF Santarém no canto superior esquerdo */}
+        <RNImage source={require('../../assets/images/af-santarem.png')} style={styles.afLogo} resizeMode="contain" />
         <Text style={styles.org}>AF SANTARÉM</Text>
         <Text style={styles.division}>{title}</Text>
         <View style={styles.subRow}>
@@ -154,6 +156,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
   },
   header: { alignItems: 'center' },
+  afLogo: { position: 'absolute', left: 0, top: -4, width: 46, height: 68 },
   org: { color: brand.amber, fontSize: 11, fontWeight: '800', letterSpacing: 3 },
   division: { color: '#ffffff', fontSize: 22, fontWeight: '800', marginTop: 6, textAlign: 'center' },
   subRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 },
