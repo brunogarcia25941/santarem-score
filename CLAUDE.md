@@ -63,9 +63,18 @@ etc.
   (scheduled/postponed→live = MATCH_START; live→finished = MATCH_END; o
   registo retroativo nunca notifica). Preferências por aparelho em
   `push_tokens.notify_goals/notify_start/notify_end` (golos por omissão; início
-  e fim opt-in), geridas pelos 3 switches do Perfil (`getPushPrefs`). O
-  "Início de Jogo" é o apito real, não um aviso 15 min antes (isso exigiria
-  agendamento, p.ex. pg_cron — não feito). Intervalo/2.ª parte não notificam.
+  e fim opt-in), geridas pelos 3 switches do Perfil (`getPushPrefs`). Intervalo/2.ª parte não notificam.
+- ✅ Lembrete 15 min antes: `pg_cron` corre `send_match_reminders()` todos os
+  minutos (job `lembrete-jogos-15-min`); para jogos `scheduled` que começam nos
+  próximos 15 min e com `matches.reminder_sent_at` nulo, marca-o e chama a Edge
+  Function com `MATCH_REMINDER`. Usa a mesma preferência do "Início de Jogo"
+  (`notify_start`). Se se mudar a hora de um jogo já avisado, pôr
+  `reminder_sent_at = null` para reavisar.
+- ✅ Ficha do clube tem separadores "Jogos e Resultados" / "Estatísticas"
+  (`ClubStats`, `src/utils/clubStats.ts`): posição, forma (últimos 5), casa/fora,
+  golos por jogo, jogos sem sofrer, maior vitória/derrota, cartões. Calculado no
+  cliente a partir dos jogos terminados. Não há melhores marcadores de propósito:
+  os delegados nem sempre indicam o jogador do golo.
 - ✅ Painel do delegado: só regista golos/cartões com o jogo começado e não
   terminado (RLS garante; admin isento, para o registo retroativo); lista com
   apagar (corrige o marcador via trigger); sobe com o teclado

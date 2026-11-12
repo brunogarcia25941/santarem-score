@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -16,6 +16,7 @@ import { useClubs } from '@/hooks/useClubs';
 import { useFavorites } from '@/context/FavoritesContext';
 import { useLiveMatches } from '@/hooks/useLiveMatches';
 import { MatchTabs } from '@/components/MatchTabs';
+import { ClubStats } from '@/components/ClubStats';
 import { ClubBadge } from '@/components/ClubBadge';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -26,6 +27,7 @@ export default function ClubDetailScreen() {
   const { clubs, loading } = useClubs();
   const { isFavorite, toggleFavorite } = useFavorites();
   const { matches } = useLiveMatches();
+  const [section, setSection] = useState<'games' | 'stats'>('games');
 
   const club = useMemo(() => {
     return clubs.find((c) => c.id === id);
@@ -71,7 +73,7 @@ export default function ClubDetailScreen() {
           </Text>
 
           <Text style={[styles.divisionSubtitle, { color: isDark ? '#a1a1aa' : '#71717a' }]}>
-            AF Santarém • {club.division === '1_divisao' ? '1.ª Divisão Distrital' : '2.ª Divisão Distrital'}
+            AF Santarém • {club.division === '1_divisao' ? '1.ª Divisão Distrital' : club.division === '2_divisao_a' ? '2.ª Divisão Distrital · Série A' : '2.ª Divisão Distrital · Série B'}
           </Text>
 
           {/* Botão de Favorito */}
@@ -131,18 +133,41 @@ export default function ClubDetailScreen() {
           </View>
         </View>
 
-        {/* Calendário e Jogos do Clube */}
-        <Text style={[styles.sectionTitle, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>
-          Jogos e Resultados
-        </Text>
-
-        <View style={styles.matchesList}>
-          <MatchTabs
-            matches={clubMatches}
-            emptyResults="Este clube ainda não tem resultados."
-            emptyFixtures="Este clube não tem jogos agendados."
-          />
+        {/* Separadores da ficha: jogos ou estatísticas */}
+        <View style={styles.sectionPills}>
+          {([['games', 'Jogos e Resultados'], ['stats', 'Estatísticas']] as const).map(([id, label]) => {
+            const selected = section === id;
+            return (
+              <TouchableOpacity
+                key={id}
+                style={[
+                  styles.sectionPill,
+                  { backgroundColor: selected ? '#2f6b4a' : isDark ? '#202226' : '#e2e5e8' },
+                ]}
+                onPress={() => {
+                  Haptics.selectionAsync();
+                  setSection(id);
+                }}
+              >
+                <Text style={[styles.sectionPillText, { color: selected ? '#ffffff' : isDark ? '#9a9ca3' : '#5c6066' }]}>
+                  {label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
+
+        {section === 'games' ? (
+          <View style={styles.matchesList}>
+            <MatchTabs
+              matches={clubMatches}
+              emptyResults="Este clube ainda não tem resultados."
+              emptyFixtures="Este clube não tem jogos agendados."
+            />
+          </View>
+        ) : (
+          <ClubStats club={club} matches={clubMatches} />
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -218,6 +243,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 13,
   },
+  sectionPills: { flexDirection: 'row', gap: 8, marginBottom: 14 },
+  sectionPill: { flex: 1, paddingVertical: 10, borderRadius: 20, alignItems: 'center' },
+  sectionPillText: { fontSize: 13, fontWeight: '700' },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '800',

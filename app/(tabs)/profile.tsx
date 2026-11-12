@@ -111,7 +111,7 @@ export default function ProfileScreen() {
           <View style={styles.settingRow}>
             <View style={styles.settingText}>
               <Text style={[styles.settingLabel, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>Início de Jogo</Text>
-              <Text style={styles.settingSub}>Avisar quando o jogo começar</Text>
+              <Text style={styles.settingSub}>Lembrete 15 min antes e aviso quando começar</Text>
             </View>
             <Switch value={prefs.start} onValueChange={(v) => handleToggle('start', v)} disabled={togglingPush} />
           </View>

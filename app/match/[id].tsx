@@ -239,30 +239,6 @@ export default function MatchDetailScreen() {
           </TouchableOpacity>
         ) : null}
 
-        {lineups.length > 0 && <LineupCard match={match} lineups={lineups} />}
-
-        {/* Localização & GPS */}
-        <View style={[styles.locationCard, { backgroundColor: isDark ? '#202226' : '#ffffff' }]}>
-          <View style={styles.locationHeader}>
-            <Ionicons name="location" size={20} color="#2f6b4a" />
-            <Text style={[styles.stadiumName, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>
-              {match.homeClub.stadiumName}
-            </Text>
-          </View>
-
-          <View style={styles.gpsButtonsRow}>
-            <TouchableOpacity style={styles.gpsButton} onPress={openGoogleMaps}>
-              <Ionicons name="map-outline" size={16} color="#ffffff" />
-              <Text style={styles.gpsButtonText}>Google Maps</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={[styles.gpsButton, { backgroundColor: '#33ccff' }]} onPress={openWaze}>
-              <Ionicons name="navigate-outline" size={16} color="#ffffff" />
-              <Text style={styles.gpsButtonText}>Waze</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
         {/* Acontecimentos em tempo real: casa à esquerda, visitante à direita */}
         <View style={[styles.tickerCard, { backgroundColor: isDark ? '#202226' : '#ffffff' }]}>
           {events.length === 0 ? (
@@ -318,6 +294,30 @@ export default function MatchDetailScreen() {
               );
             })
           )}
+        </View>
+
+        {lineups.length > 0 && <LineupCard match={match} lineups={lineups} />}
+
+        {/* Localização & GPS */}
+        <View style={[styles.locationCard, { backgroundColor: isDark ? '#202226' : '#ffffff' }]}>
+          <View style={styles.locationHeader}>
+            <Ionicons name="location" size={20} color="#2f6b4a" />
+            <Text style={[styles.stadiumName, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>
+              {match.homeClub.stadiumName}
+            </Text>
+          </View>
+
+          <View style={styles.gpsButtonsRow}>
+            <TouchableOpacity style={styles.gpsButton} onPress={openGoogleMaps}>
+              <Ionicons name="map-outline" size={16} color="#ffffff" />
+              <Text style={styles.gpsButtonText}>Google Maps</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={[styles.gpsButton, { backgroundColor: '#33ccff' }]} onPress={openWaze}>
+              <Ionicons name="navigate-outline" size={16} color="#ffffff" />
+              <Text style={styles.gpsButtonText}>Waze</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </ScrollView>
 
