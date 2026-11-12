@@ -38,11 +38,11 @@ function Badge({ club, onSettled }: { club: Club; onSettled?: () => void }) {
   }, [useImage]);
 
   return (
-    <View style={[styles.badge, { backgroundColor: useImage ? '#131417' : club.primaryColor }]}>
+    <View style={useImage ? styles.badgeImageBox : [styles.badgeFallbackCircle, { backgroundColor: club.primaryColor }]}>
       {useImage ? (
         <Image
           source={{ uri: club.badgeUrl }}
-          style={{ width: 86, height: 86 }}
+          style={{ width: 104, height: 104 }}
           contentFit="contain"
           onLoad={onSettled}
           onError={() => setFailed(true)}
@@ -55,7 +55,7 @@ function Badge({ club, onSettled }: { club: Club; onSettled?: () => void }) {
 }
 
 /**
- * Cartaz do jogo para partilhar: fundo da app (holofotes + verde floresta), divisão/série/jornada
+ * Cartaz do jogo para partilhar: fundo com os holofotes da app sobre um degradé azul (a cor da AF Santarém), divisão/série/jornada
  * no topo, os dois emblemas e, ao centro, a hora (agendado), o resultado + minuto (em direto) ou o
  * resultado final. Tem tamanho fixo e cores próprias (não segue o tema claro/escuro) para a imagem
  * sair sempre igual.
@@ -80,7 +80,7 @@ export const MatchShareCard = React.forwardRef<View, Props>(function MatchShareC
         imageStyle={{ opacity: 0.35 }}
       />
       <LinearGradient
-        colors={['rgba(31,77,54,0.92)', 'rgba(26,27,30,0.94)', 'rgba(15,16,18,0.98)']}
+        colors={['rgba(30,86,176,0.94)', 'rgba(18,48,108,0.96)', 'rgba(8,20,48,0.98)']}
         style={StyleSheet.absoluteFill}
       />
 
@@ -133,10 +133,10 @@ export const MatchShareCard = React.forwardRef<View, Props>(function MatchShareC
         </View>
       </View>
 
-      {/* Rodapé: data e estádio nos jogos por vir; só a data nos restantes */}
+      {/* Rodapé: data e estádio, em todos os estados */}
       <View style={styles.footer}>
         <Text style={styles.date}>{capitalize(formatMatchDayLong(match.matchDate))}</Text>
-        {match.status === 'scheduled' && <Text style={styles.stadium}>{match.homeClub.stadiumName}</Text>}
+        <Text style={styles.stadium}>{match.homeClub.stadiumName}</Text>
         <Text style={styles.brand}>SANTARÉM SCORE</Text>
       </View>
     </View>
@@ -162,7 +162,9 @@ const styles = StyleSheet.create({
   rule: { width: 56, height: 3, borderRadius: 2, backgroundColor: brand.amber, marginTop: 14 },
   body: { flexDirection: 'row', alignItems: 'center' },
   team: { flex: 1, alignItems: 'center' },
-  badge: {
+  // Os emblemas têm fundo transparente: ficam soltos, sem círculo. Só o fallback (iniciais) leva círculo.
+  badgeImageBox: { width: 104, height: 104, alignItems: 'center', justifyContent: 'center' },
+  badgeFallbackCircle: {
     width: 104,
     height: 104,
     borderRadius: 52,
@@ -182,6 +184,6 @@ const styles = StyleSheet.create({
   livePillText: { color: '#ffffff', fontSize: 11, fontWeight: '800', letterSpacing: 1 },
   footer: { alignItems: 'center' },
   date: { color: '#ffffff', fontSize: 14, fontWeight: '700', textAlign: 'center' },
-  stadium: { color: '#a1a1aa', fontSize: 12, marginTop: 3 },
-  brand: { color: brand.forest, fontSize: 10, fontWeight: '800', letterSpacing: 3, marginTop: 14, opacity: 0.9 },
+  stadium: { color: '#cbd5e1', fontSize: 12, marginTop: 3 },
+  brand: { color: '#93b4e8', fontSize: 10, fontWeight: '800', letterSpacing: 3, marginTop: 14, opacity: 0.9 },
 });

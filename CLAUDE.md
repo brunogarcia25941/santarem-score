@@ -76,7 +76,7 @@ etc.
   cliente a partir dos jogos terminados. Não há melhores marcadores de propósito:
   os delegados nem sempre indicam o jogador do golo.
 - ✅ Partilhar jogo como imagem: ícone no cartão do placar (`app/match/[id].tsx`)
-  → `MatchShareCard` (cartaz 4:5, fundo floodlights + gradiente verde, divisão/
+  → `MatchShareCard` (cartaz 4:5, fundo floodlights + degradé azul (cor da AF Santarém); emblemas sem círculo; estádio sempre, divisão/
   série/jornada, emblemas; ao centro hora (agendado), resultado + minuto (direto)
   ou resultado final) desenhado fora do ecrã só durante a partilha, capturado
   com `react-native-view-shot` a 1080×1350 depois de os 2 emblemas carregarem, e
@@ -476,12 +476,11 @@ email antigo.
 
 ## Limitações conhecidas / decisões em aberto
 
-- Jogos por registar: J1 e J2 da 1.ª Divisão já se realizaram; três jogos
-  da J2 (Mocarriense–Mação, Torres Novas–Ouriquense, Tomar–Vasco Gama) estão
-  por fechar. O Mocarriense–Mação está `live` 3-1 com eventos de teste
-  (jogadores inventados: João Silva, etc.) — resolver com o Bruno.
-- Notificações push: tabela `push_tokens` existe mas está vazia e sem
-  políticas RLS — funcionalidade não implementada.
+- Resultados registados até 12/11/2026 (J1–J8 da 1.ª Divisão, J1–J4 das Séries A e B
+  da 2.ª), copiados dos quadros da AF Santarém; 108 jogos terminados, sem
+  `finished_at` (só o admin os corrige). Adiados com nova data: Tomar–Vasco Gama e
+  Torres Novas–Ouriquense (31/01/2027 15:00), Rebocho–Benavente (31/01/2027 15:00),
+  Ouriense–Coruchense (14/03/2027 16:00). Mocarriense–Mação realizou-se a 23/09.
 - Não há admin UI para gerir contas de delegados/moderadores — feito por SQL
   direto até agora (só uma conta promovida a admin: a do Bruno).
 - Avisos de segurança do Supabase por resolver (ver secção própria) — não
