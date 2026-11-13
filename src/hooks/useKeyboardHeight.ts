@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Keyboard, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 /**
  * Altura atual do teclado. Os painéis em Modal usam-na para subirem com o
@@ -21,4 +22,15 @@ export function useKeyboardHeight(): number {
   }, []);
 
   return height;
+}
+
+/**
+ * Espaço a deixar por baixo de um painel em Modal: o teclado quando está aberto, senão a
+ * barra de navegação do sistema (os 3 botões do Android, que em edge-to-edge ficam POR CIMA
+ * da janela da app e tapavam os botões de baixo dos painéis).
+ */
+export function useSheetBottomPadding(): number {
+  const keyboardHeight = useKeyboardHeight();
+  const insets = useSafeAreaInsets();
+  return Math.max(keyboardHeight, insets.bottom);
 }

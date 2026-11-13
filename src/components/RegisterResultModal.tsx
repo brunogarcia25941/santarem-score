@@ -17,7 +17,7 @@ import * as Haptics from 'expo-haptics';
 import { Match } from '@/types';
 import { supabase } from '@/services/supabase';
 import { brand, getTheme } from '@/constants/theme';
-import { useKeyboardHeight } from '@/hooks/useKeyboardHeight';
+import { useKeyboardHeight, useSheetBottomPadding } from '@/hooks/useKeyboardHeight';
 
 type EventType = 'GOAL' | 'OWN_GOAL' | 'YELLOW_CARD' | 'RED_CARD';
 
@@ -58,6 +58,7 @@ export function RegisterResultModal({ visible, match, existingEvents, onClose, o
   const isDark = useColorScheme() === 'dark';
   const t = getTheme(isDark);
   const keyboardHeight = useKeyboardHeight();
+  const sheetBottom = useSheetBottomPadding();
   const { height: windowHeight } = useWindowDimensions();
 
   const [homeScore, setHomeScore] = useState('0');
@@ -202,7 +203,7 @@ export function RegisterResultModal({ visible, match, existingEvents, onClose, o
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={() => confirmDiscard(onClose)}>
       {/* O painel sobe com o teclado (margem = altura do teclado) e a lista rola dentro do espaço que sobra. */}
-      <View style={[styles.overlay, { paddingBottom: keyboardHeight }]}>
+      <View style={[styles.overlay, { paddingBottom: sheetBottom }]}>
         <View
           style={[
             styles.container,

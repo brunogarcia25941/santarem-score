@@ -146,6 +146,19 @@ export default function ProfileScreen() {
 
           <View style={styles.divider} />
 
+          {profile?.role === 'admin' && (
+            <>
+              <TouchableOpacity style={styles.actionRow} onPress={() => router.push('/admin' as any)}>
+                <Ionicons name="people-outline" size={20} color="#2f6b4a" />
+                <Text style={[styles.actionRowText, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>
+                  Zona Admin · Delegados
+                </Text>
+                <Ionicons name="chevron-forward" size={18} color="#71717a" />
+              </TouchableOpacity>
+              <View style={styles.divider} />
+            </>
+          )}
+
           {isDelegate ? (
             <TouchableOpacity style={styles.actionRow} onPress={() => signOut()}>
               <Ionicons name="log-out-outline" size={20} color="#dc2626" />

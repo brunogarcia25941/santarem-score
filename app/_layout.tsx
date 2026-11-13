@@ -215,6 +215,14 @@ export default function RootLayout() {
             }}
           />
           <Stack.Screen
+            name="admin"
+            options={{
+              ...headerOptions,
+              presentation: 'card',
+              title: 'Zona Admin',
+            }}
+          />
+          <Stack.Screen
             name="club/[id]"
             options={{
               ...headerOptions,

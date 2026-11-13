@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, useColorScheme } from 'react-
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { Match } from '@/types';
-import { ScoreboardPlate } from './ScoreboardPlate';
+import { ScoreDisplay } from './ScoreDisplay';
 import { ClubBadgeLink } from './ClubBadgeLink';
 import { formatMatchDateFull } from '@/utils/dateFormat';
 import { currentMinute } from '@/utils/matchClock';
@@ -100,7 +100,7 @@ export function MatchCard({ match }: MatchCardProps) {
             </View>
           ) : (
             <View ref={scoreboardRef} collapsable={false}>
-              <ScoreboardPlate
+              <ScoreDisplay
                 homeScore={match.homeScore}
                 awayScore={match.awayScore}
                 size="small"
@@ -210,14 +210,10 @@ const styles = StyleSheet.create({
   vsPlate: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 6,
-    backgroundColor: '#0c0d0e',
-    borderWidth: 1,
-    borderColor: '#26282b',
   },
   vsText: {
     color: '#8b8f97',
-    fontSize: 11,
-    fontWeight: '800',
+    fontSize: 13,
+    fontWeight: '700',
   },
 });

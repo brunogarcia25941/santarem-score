@@ -16,7 +16,7 @@ import * as Haptics from 'expo-haptics';
 import { Match } from '@/types';
 import { supabase } from '@/services/supabase';
 import { brand, getTheme } from '@/constants/theme';
-import { useKeyboardHeight } from '@/hooks/useKeyboardHeight';
+import { useKeyboardHeight, useSheetBottomPadding } from '@/hooks/useKeyboardHeight';
 import { LineupRow } from './LineupCard';
 
 interface DraftPlayer {
@@ -52,6 +52,7 @@ export function LineupEditorModal({ visible, match, lineups, onClose, onSaved }:
   const isDark = useColorScheme() === 'dark';
   const t = getTheme(isDark);
   const keyboardHeight = useKeyboardHeight();
+  const sheetBottom = useSheetBottomPadding();
   const { height: windowHeight } = useWindowDimensions();
 
   const [clubId, setClubId] = useState(match.homeClub.id);
@@ -144,7 +145,7 @@ export function LineupEditorModal({ visible, match, lineups, onClose, onSaved }:
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <View style={[styles.overlay, { paddingBottom: keyboardHeight }]}>
+      <View style={[styles.overlay, { paddingBottom: sheetBottom }]}>
         <View
           style={[
             styles.container,

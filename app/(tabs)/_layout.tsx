@@ -2,9 +2,13 @@ import React from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  // Com a navegação de 3 botões o Android desenha-os por cima do fundo da app (edge-to-edge):
+  // a barra de separadores tem de crescer esse espaço, senão fica por baixo deles e não se clica.
+  const insets = useSafeAreaInsets();
   const isDark = colorScheme === 'dark';
 
   const tintColor = '#2f6b4a'; // Verde distrital padrão
@@ -26,8 +30,8 @@ export default function TabLayout() {
         tabBarStyle: {
           backgroundColor: bgColor,
           borderTopColor: borderColor,
-          height: 60,
-          paddingBottom: 8,
+          height: 60 + insets.bottom,
+          paddingBottom: 8 + insets.bottom,
           paddingTop: 6,
         },
         tabBarLabelStyle: {

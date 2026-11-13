@@ -31,7 +31,7 @@ etc.
 - ✅ Fila offline de eventos (AsyncStorage) com sincronização automática.
 - ✅ Identidade visual própria (verde floresta + âmbar, nada de "verde
   elétrico" genérico de template) — ver secção Tema.
-- ✅ Marcador estilo LED 7-segmentos com efeito neumórfico.
+- ✅ Resultado em estilo simples (`ScoreDisplay`: números grandes na cor do tema; em direto, etiqueta vermelha com o minuto na página do jogo). Substituiu o marcador LED 7-segmentos, que destoava do resto da app (`ScoreboardPlate`/`SegmentDisplay` apagados).
 - ✅ Transição "FLIP" do placar/emblemas entre a lista de jogos e a página do
   jogo (ver secção "Transições e animações" — é a parte mais delicada do
   código, ler antes de mexer).
@@ -86,6 +86,16 @@ etc.
   Pillow; fundo do ícone/splash `#0c1326`); `af-santarem.png` é o da AF Santarém
   (aparece no canto superior esquerdo do cartaz de partilha). Mudar o ícone exige
   nova build.
+- ✅ Zona admin (`app/admin.tsx`, entrada em Perfil → "Zona Admin · Delegados", só
+  para `role = admin`): criar conta de delegado (email + palavra-passe, com
+  "Gerar") ligada a UM clube, mudar de clube, nova palavra-passe, retirar acesso
+  (passa a `role = user`; a conta fica). Tudo passa pela Edge Function
+  `admin-manage-users` (`src/services/adminUsers.ts`), que valida o token, confirma
+  `profiles.role = 'admin'` e usa a chave de serviço; contas admin nunca se alteram
+  por ali. Um delegado = um clube (`profiles.moderated_club_id`).
+- ✅ Barra de separadores e painéis (Modal) somam `useSafeAreaInsets().bottom`
+  (`useSheetBottomPadding`): com a navegação de 3 botões do Android (edge-to-edge)
+  ficavam por baixo deles.
 - ✅ Painel do delegado: só regista golos/cartões com o jogo começado e não
   terminado (RLS garante; admin isento, para o registo retroativo); lista com
   apagar (corrige o marcador via trigger); sobe com o teclado
@@ -319,14 +329,8 @@ em **três sítios diferentes** do React Navigation, ou volta o "flash branco"
    próprio da seleção de clubes.
 
 Componentes visuais de marca:
-- `src/components/ScoreboardPlate.tsx` — o "placar" em LED 7-segmentos, com
-  moldura neumórfica (parafusos nos cantos, reflexo de acrílico, sombra de
-  cavidade). Tem duas variantes: `size="small"` (usado no `MatchCard`,
-  digitSize 22) e `size="large"` (usado em `match/[id].tsx`, digitSize 30 —
-  **já foi reduzido duas vezes** a pedido do Bruno, começou em 52, não
-  aumentar sem pedido explícito).
-- `src/components/SegmentDisplay.tsx` — dígitos individuais 7-segmentos em
-  SVG, com "fantasmas" dos segmentos não acesos visíveis a baixa opacidade.
+- `src/components/ScoreDisplay.tsx` — o resultado (variantes `small` no `MatchCard` e
+  `large` em `match/[id].tsx`). O antigo placar LED foi removido a pedido do Bruno.
 - `src/components/StadiumTexture.tsx` — camada de fundo com fotografias reais
   fornecidas pelo Bruno (`assets/images/textures/grass-background.jpg` e
   `floodlights.jpg`), opacidade baixa (8-12%) + brilho de holofote em SVG
@@ -486,8 +490,8 @@ email antigo.
   `finished_at` (só o admin os corrige). Adiados com nova data: Tomar–Vasco Gama e
   Torres Novas–Ouriquense (31/01/2027 15:00), Rebocho–Benavente (31/01/2027 15:00),
   Ouriense–Coruchense (14/03/2027 16:00). Mocarriense–Mação realizou-se a 23/09.
-- Não há admin UI para gerir contas de delegados/moderadores — feito por SQL
-  direto até agora (só uma conta promovida a admin: a do Bruno).
+- Contas de delegados geridas na Zona Admin da app; só há uma conta admin (a do
+  Bruno, promovida por SQL).
 - Avisos de segurança do Supabase por resolver (ver secção própria) — não
   urgentes mas relevantes antes de um lançamento público.
 

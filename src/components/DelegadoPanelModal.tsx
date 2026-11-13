@@ -19,7 +19,7 @@ import { submitMatchEvent } from '@/services/matchActions';
 import { supabase } from '@/services/supabase';
 import { brand, getTheme } from '@/constants/theme';
 import { currentMinute } from '@/utils/matchClock';
-import { useKeyboardHeight } from '@/hooks/useKeyboardHeight';
+import { useKeyboardHeight, useSheetBottomPadding } from '@/hooks/useKeyboardHeight';
 import { useNow } from '@/hooks/useNow';
 
 type Tab = 'period' | 'goal' | 'card' | 'events';
@@ -60,6 +60,7 @@ export function DelegadoPanelModal({
   const isDark = useColorScheme() === 'dark';
   const t = getTheme(isDark);
   const keyboardHeight = useKeyboardHeight();
+  const sheetBottom = useSheetBottomPadding();
   const { height: windowHeight } = useWindowDimensions();
   const now = useNow(visible && match.status === 'live');
 
@@ -250,7 +251,7 @@ export function DelegadoPanelModal({
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       {/* O painel sobe com o teclado: margem igual à altura do teclado e altura máxima do resto do ecrã. */}
-      <View style={[styles.overlay, { paddingBottom: keyboardHeight }]}>
+      <View style={[styles.overlay, { paddingBottom: sheetBottom }]}>
         <View
           style={[
             styles.container,

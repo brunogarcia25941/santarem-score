@@ -23,7 +23,7 @@ import { LineupCard, LineupRow } from '@/components/LineupCard';
 import { LineupEditorModal } from '@/components/LineupEditorModal';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StadiumTexture } from '@/components/StadiumTexture';
-import { ScoreboardPlate } from '@/components/ScoreboardPlate';
+import { ScoreDisplay } from '@/components/ScoreDisplay';
 import { FlyInFromOrigin } from '@/components/FlyInFromOrigin';
 import { consumeMatchTransitionOrigin } from '@/utils/matchTransitionOrigin';
 import { formatMatchDateFull } from '@/utils/dateFormat';
@@ -253,7 +253,7 @@ export default function MatchDetailScreen() {
 
             <View style={styles.scoreCenter}>
               <FlyInFromOrigin origin={transitionOrigin?.scoreboard}>
-                <ScoreboardPlate
+                <ScoreDisplay
                   homeScore={match.homeScore}
                   awayScore={match.awayScore}
                   size="large"
