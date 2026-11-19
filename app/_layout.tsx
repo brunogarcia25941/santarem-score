@@ -166,16 +166,16 @@ export default function RootLayout() {
   // nunca ser o branco por omissão do react-native-screens — era isso
   // que causava o "flash" branco ao abrir/fechar páginas.
   const screenBg = isDark ? '#1a1b1e' : '#eef0f2';
-  const headerBg = isDark ? '#121214' : '#ffffff';
-  const headerBorder = isDark ? '#2c2e33' : '#e2e5e8';
-  const headerText = isDark ? '#eef0f2' : '#1a1b1e';
+  // Cabeçalhos em verde de marca (iguais aos dos separadores), com texto claro.
+  const headerBg = isDark ? '#102a1c' : '#1f4d36';
+  const headerText = '#ffffff';
 
   const headerOptions = {
     headerShown: true,
     headerStyle: { backgroundColor: headerBg },
     headerTintColor: headerText,
     headerTitleStyle: { color: headerText, fontWeight: '700' as const },
-    headerShadowVisible: true,
+    headerShadowVisible: false,
     contentStyle: { backgroundColor: screenBg },
   };
 
@@ -214,6 +214,7 @@ export default function RootLayout() {
               freezeOnBlur: true,
             }}
           />
+          <Stack.Screen name="search" options={{ headerShown: false, animation: 'fade' }} />
           <Stack.Screen
             name="admin"
             options={{
@@ -231,7 +232,8 @@ export default function RootLayout() {
             }}
           />
         </Stack>
-        <StatusBar style="auto" />
+        {/* Todos os ecrãs têm cabeçalho verde escuro, por isso os ícones da barra de estado são sempre claros. */}
+        <StatusBar style="light" />
       </FavoritesProvider>
       </AuthProvider>
     </GestureHandlerRootView>

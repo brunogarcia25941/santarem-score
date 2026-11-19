@@ -72,7 +72,7 @@ etc.
   `reminder_sent_at = null` para reavisar.
 - ✅ Ficha do clube tem separadores "Jogos e Resultados" / "Estatísticas"
   (`ClubStats`, `src/utils/clubStats.ts`): posição, forma (últimos 5), casa/fora,
-  golos por jogo, jogos sem sofrer, maior vitória/derrota, cartões. Calculado no
+  golos por jogo, jogos sem sofrer, maior vitória/derrota (sem disciplina, a pedido). Calculado no
   cliente a partir dos jogos terminados. Não há melhores marcadores de propósito:
   os delegados nem sempre indicam o jogador do golo.
 - ✅ Partilhar jogo como imagem: ícone no cartão do placar (`app/match/[id].tsx`)
@@ -96,6 +96,17 @@ etc.
 - ✅ Barra de separadores e painéis (Modal) somam `useSafeAreaInsets().bottom`
   (`useSheetBottomPadding`): com a navegação de 3 botões do Android (edge-to-edge)
   ficavam por baixo deles.
+- ✅ Cabeçalho de marca (`AppHeader`/`HeaderShell`): degradé verde com fio âmbar,
+  logótipo da app, título e (no Início) lupa. Os ecrãs em pilha usam o mesmo verde
+  nos cabeçalhos nativos; a barra de estado é sempre clara (`StatusBar style="light"`
+  na raiz) porque TODOS os ecrãs têm cabeçalho verde. Quem criar um ecrã novo deve
+  usar um destes cabeçalhos. A lupa abre `app/search.tsx` (clube ou estádio, sem
+  ligar a acentos). Fundo `StadiumTexture grass` também em Competições, Favoritos,
+  Clubes, Perfil, ficha do clube, pesquisa e seleção de clubes.
+- ✅ Sem clubes favoritos é permitido: o Início mostra um cartão "Segue os teus
+  clubes" com botão "Adicionar" e os Favoritos têm "Adicionar favoritos"; ambos
+  abrem `(onboarding)/select-clubs` (com pesquisa; fora da 1.ª utilização mostra
+  seta de voltar e "Concluir"). Perfil sem foto: email + papel.
 - ✅ Painel do delegado: só regista golos/cartões com o jogo começado e não
   terminado (RLS garante; admin isento, para o registo retroativo); lista com
   apagar (corrige o marcador via trigger); sobe com o teclado

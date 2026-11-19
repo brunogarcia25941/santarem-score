@@ -16,6 +16,7 @@ import { useClubs } from '@/hooks/useClubs';
 import { useFavorites } from '@/context/FavoritesContext';
 import { ClubBadge } from '@/components/ClubBadge';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StadiumTexture } from '@/components/StadiumTexture';
 
 export default function ClubsScreen() {
   const router = useRouter();
@@ -33,6 +34,7 @@ export default function ClubsScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1a1b1e' : '#eef0f2' }]}>
+      <StadiumTexture variant="grass" />
       {/* Barra de Pesquisa */}
       <View style={styles.searchContainer}>
         <View

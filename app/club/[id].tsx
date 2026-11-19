@@ -19,6 +19,7 @@ import { MatchTabs } from '@/components/MatchTabs';
 import { ClubStats } from '@/components/ClubStats';
 import { ClubBadge } from '@/components/ClubBadge';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StadiumTexture } from '@/components/StadiumTexture';
 
 export default function ClubDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -63,6 +64,7 @@ export default function ClubDetailScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1a1b1e' : '#eef0f2' }]}>
+      <StadiumTexture variant="grass" />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* Cartão de Apresentação do Clube */}
         <View style={[styles.clubHero, { backgroundColor: isDark ? '#202226' : '#ffffff' }]}>

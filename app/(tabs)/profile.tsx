@@ -13,6 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StadiumTexture } from '@/components/StadiumTexture';
 import { useAuth } from '@/context/AuthContext';
 import { useFavorites } from '@/context/FavoritesContext';
 import {
@@ -81,17 +82,15 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1a1b1e' : '#eef0f2' }]}>
+      <StadiumTexture variant="grass" />
       <ScrollView contentContainerStyle={styles.content}>
-        {/* Cabeçalho do Perfil */}
+        {/* Conta: só o email e o papel (sem foto) */}
         <View style={[styles.card, { backgroundColor: isDark ? '#202226' : '#ffffff' }]}>
-          <View style={styles.avatar}>
-            <Ionicons name="person" size={28} color="#ffffff" />
-          </View>
-          <View style={styles.userInfo}>
-            <Text style={[styles.userName, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>
-              {isDelegate ? session!.user.email : 'Adepto Ribatejano'}
-            </Text>
-            <Text style={styles.userRole}>{isDelegate ? roleLabel : 'Utilizador Geral'}</Text>
+          <Text style={[styles.userName, { color: isDark ? '#eef0f2' : '#1a1b1e' }]} numberOfLines={1}>
+            {isDelegate ? session!.user.email : 'Sem sessão iniciada'}
+          </Text>
+          <View style={styles.rolePill}>
+            <Text style={styles.rolePillText}>{isDelegate ? roleLabel : 'Utilizador Geral'}</Text>
           </View>
         </View>
 
@@ -187,8 +186,8 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { padding: 16 },
   card: { borderRadius: 14, padding: 16, marginBottom: 20 },
-  avatar: { width: 50, height: 50, borderRadius: 25, backgroundColor: '#2f6b4a', alignItems: 'center', justifyContent: 'center' },
-  userInfo: { marginLeft: 14, justifyContent: 'center', flex: 1 },
+  rolePill: { alignSelf: 'flex-start', marginTop: 8, backgroundColor: 'rgba(47, 107, 74, 0.14)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
+  rolePillText: { color: '#2f6b4a', fontSize: 12, fontWeight: '700' },
   userName: { fontSize: 16, fontWeight: '700' },
   userRole: { fontSize: 12, color: '#71717a', marginTop: 2 },
   sectionTitle: { fontSize: 14, fontWeight: '700', marginBottom: 8, marginLeft: 4 },

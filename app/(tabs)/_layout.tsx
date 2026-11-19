@@ -1,10 +1,12 @@
 import React from 'react';
-import { Tabs } from 'expo-router';
+import { Tabs, useRouter } from 'expo-router';
+import { AppHeader } from '@/components/AppHeader';
 import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function TabLayout() {
+  const router = useRouter();
   const colorScheme = useColorScheme();
   // Com a navegação de 3 botões o Android desenha-os por cima do fundo da app (edge-to-edge):
   // a barra de separadores tem de crescer esse espaço, senão fica por baixo deles e não se clica.
@@ -38,14 +40,14 @@ export default function TabLayout() {
           fontSize: 11,
           fontWeight: '600',
         },
-        headerStyle: {
-          backgroundColor: bgColor,
-          borderBottomColor: borderColor,
-        },
-        headerTitleStyle: {
-          fontWeight: 'bold',
-          color: isDark ? '#eef0f2' : '#1a1b1e',
-        },
+        // Cabeçalho de marca (logótipo + título + lupa no Início) em vez do cabeçalho genérico.
+        header: ({ options, route }) => (
+          <AppHeader
+            title={options.title ?? route.name}
+            brandTitle={route.name === 'index'}
+            onSearch={route.name === 'index' ? () => router.push('/search' as any) : undefined}
+          />
+        ),
       }}
     >
       <Tabs.Screen

@@ -16,6 +16,7 @@ import { useClubs } from '@/hooks/useClubs';
 import { MatchTabs } from '@/components/MatchTabs';
 import { ClubBadge } from '@/components/ClubBadge';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StadiumTexture } from '@/components/StadiumTexture';
 
 export default function FavoritesScreen() {
   const router = useRouter();
@@ -32,6 +33,7 @@ export default function FavoritesScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1a1b1e' : '#eef0f2' }]}>
+      <StadiumTexture variant="grass" />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {loading ? (
           <ActivityIndicator size="large" color="#2f6b4a" style={{ marginTop: 40 }} />
@@ -42,13 +44,13 @@ export default function FavoritesScreen() {
               Sem clubes favoritos
             </Text>
             <Text style={styles.emptySubtitle}>
-              Escolhe as equipas que queres acompanhar de perto na aba de Clubes.
+              Adiciona as equipas que queres acompanhar de perto para veres aqui os jogos delas e receberes avisos.
             </Text>
             <TouchableOpacity
               style={styles.selectBtn}
               onPress={() => router.push('/(onboarding)/select-clubs')}
             >
-              <Text style={styles.selectBtnText}>Selecionar Clubes</Text>
+              <Text style={styles.selectBtnText}>Adicionar favoritos</Text>
             </TouchableOpacity>
           </View>
         ) : (

@@ -14,6 +14,7 @@ import { supabase } from '@/services/supabase';
 import { useClubs } from '@/hooks/useClubs';
 import { ClubBadge } from '@/components/ClubBadge';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StadiumTexture } from '@/components/StadiumTexture';
 import { GestureDetector } from 'react-native-gesture-handler';
 import Animated from 'react-native-reanimated';
 import { useSwipeableTabs } from '@/hooks/useSwipeableTabs';
@@ -93,6 +94,7 @@ export default function CompetitionsScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1a1b1e' : '#eef0f2' }]}>
+      <StadiumTexture variant="grass" />
       {/* Seletor de Divisões */}
       <View style={styles.selectorContainer}>
         {DIVISIONS.map((div) => {

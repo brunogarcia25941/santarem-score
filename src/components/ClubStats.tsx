@@ -1,9 +1,8 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Club, Match } from '@/types';
 import { getTheme } from '@/constants/theme';
-import { supabase } from '@/services/supabase';
 import { useStandings } from '@/hooks/useStandings';
 import { computeClubStats, FormResult, SplitRecord } from '@/utils/clubStats';
 
@@ -16,8 +15,7 @@ const FORM_COLORS: Record<FormResult, string> = { V: '#2f6b4a', E: '#8a8e94', D:
 
 /**
  * Estatísticas de um clube na sua ficha: posição, forma recente, casa/fora,
- * defesa/ataque e disciplina. Tudo sai dos jogos terminados; só os cartões vêm de
- * uma consulta própria a `match_events` (não estão no objeto Match).
+ * e defesa/ataque. Tudo sai dos jogos terminados que a app já tem.
  */
 export function ClubStats({ club, matches }: ClubStatsProps) {
   const isDark = useColorScheme() === 'dark';
@@ -27,27 +25,6 @@ export function ClubStats({ club, matches }: ClubStatsProps) {
 
   const stats = useMemo(() => computeClubStats(club.id, matches), [club.id, matches]);
   const standing = getClubStanding(club.id, club.division);
-
-  const [cards, setCards] = useState<{ yellow: number; red: number } | null>(null);
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const { data, error } = await supabase
-        .from('match_events')
-        .select('event_type, matches!inner(status)')
-        .eq('club_id', club.id)
-        .in('event_type', ['YELLOW_CARD', 'RED_CARD'])
-        .eq('matches.status', 'finished');
-      if (cancelled || error || !data) return;
-      setCards({
-        yellow: data.filter((e: any) => e.event_type === 'YELLOW_CARD').length,
-        red: data.filter((e: any) => e.event_type === 'RED_CARD').length,
-      });
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [club.id, matches]);
 
   const card = { backgroundColor: t.surface };
   const avg = (n: number) => (stats.played > 0 ? (n / stats.played).toFixed(1) : '–');
@@ -138,14 +115,6 @@ export function ClubStats({ club, matches }: ClubStatsProps) {
         <Row label="Maior derrota" value={matchLine(stats.biggestLoss)} />
       </View>
 
-      <View style={[styles.card, card]}>
-        <Text style={[styles.cardTitle, { color: t.text }]}>Disciplina</Text>
-        <Row label="🟨 Cartões amarelos" value={cards ? String(cards.yellow) : '…'} />
-        <Row label="🟥 Cartões vermelhos" value={cards ? String(cards.red) : '…'} />
-        <Text style={[styles.hint, { color: t.textFaint }]}>
-          Só contam os cartões que os delegados registaram.
-        </Text>
-      </View>
     </View>
   );
 }

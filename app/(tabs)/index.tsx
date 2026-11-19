@@ -215,6 +215,27 @@ export default function HomeScreen() {
           </View>
         )}
 
+        {/* Sem clubes favoritos: convite para os adicionar (em vez do carrossel) */}
+        {favoriteClubIds.length === 0 && isOnboardingCompleted && (
+          <View
+            style={[
+              styles.emptyFavCard,
+              { backgroundColor: isDark ? '#202226' : '#ffffff', borderColor: isDark ? '#2c2e33' : '#e2e5e8' },
+            ]}
+          >
+            <Ionicons name="star-outline" size={28} color="#eab308" />
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.emptyFavTitle, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>Segue os teus clubes</Text>
+              <Text style={[styles.emptyFavText, { color: isDark ? '#a1a1aa' : '#71717a' }]}>
+                Adiciona favoritos para veres aqui o último e o próximo jogo e receberes avisos.
+              </Text>
+            </View>
+            <TouchableOpacity style={styles.emptyFavBtn} onPress={() => router.push('/(onboarding)/select-clubs')}>
+              <Text style={styles.emptyFavBtnText}>Adicionar</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* Filtros */}
         <Text style={[styles.sectionTitle, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>Jogos do Distrito</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filtersScroll}>
@@ -313,6 +334,20 @@ const styles = StyleSheet.create({
   centered: { alignItems: 'center', justifyContent: 'center' },
   scrollContent: { paddingBottom: 40 },
   carouselContainer: { marginTop: 12, paddingHorizontal: 16 },
+  emptyFavCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 12,
+    marginHorizontal: 16,
+    padding: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  emptyFavTitle: { fontSize: 15, fontWeight: '800' },
+  emptyFavText: { fontSize: 12, marginTop: 2, lineHeight: 17 },
+  emptyFavBtn: { backgroundColor: '#2f6b4a', paddingHorizontal: 14, paddingVertical: 9, borderRadius: 10 },
+  emptyFavBtnText: { color: '#ffffff', fontWeight: '800', fontSize: 13 },
   favoriteCard: { padding: 16, borderRadius: 16, borderWidth: 1, marginRight: 16 },
   cardHeader: { flexDirection: 'row', alignItems: 'center' },
   cardHeaderText: { flex: 1, marginLeft: 12 },
