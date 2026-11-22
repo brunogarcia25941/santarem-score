@@ -17,6 +17,7 @@ import { useFavorites } from '@/context/FavoritesContext';
 import { useLiveMatches } from '@/hooks/useLiveMatches';
 import { MatchTabs } from '@/components/MatchTabs';
 import { ClubStats } from '@/components/ClubStats';
+import { track } from '@/services/analytics';
 import { ClubBadge } from '@/components/ClubBadge';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StadiumTexture } from '@/components/StadiumTexture';
@@ -148,6 +149,7 @@ export default function ClubDetailScreen() {
                 ]}
                 onPress={() => {
                   Haptics.selectionAsync();
+                  track('club.tab', { club_id: club.id, tab: id });
                   setSection(id);
                 }}
               >

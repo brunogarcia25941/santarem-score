@@ -29,6 +29,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { groupMatches, defaultGroupIndex } from '@/utils/matchGroups';
 import { currentMinute } from '@/utils/matchClock';
 import { useNow } from '@/hooks/useNow';
+import { track } from '@/services/analytics';
 
 const { width } = Dimensions.get('window');
 
@@ -69,6 +70,7 @@ export default function HomeScreen() {
     currentIndex: selectedCompIndex === -1 ? 0 : selectedCompIndex,
     onChangeIndex: (index) => {
       Haptics.selectionAsync();
+      track('home.filter', { competition: COMPETITIONS_FILTER[index], via: 'swipe' });
       setSelectedComp(COMPETITIONS_FILTER[index]);
     },
   });
@@ -252,6 +254,7 @@ export default function HomeScreen() {
                 ]}
                 onPress={() => {
                   Haptics.selectionAsync();
+                  track('home.filter', { competition: comp, via: 'tap' });
                   setSelectedComp(comp);
                 }}
               >

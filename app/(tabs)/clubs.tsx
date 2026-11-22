@@ -16,6 +16,7 @@ import { useClubs } from '@/hooks/useClubs';
 import { useFavorites } from '@/context/FavoritesContext';
 import { ClubBadge } from '@/components/ClubBadge';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTrackSearch } from '@/hooks/useTrackSearch';
 import { StadiumTexture } from '@/components/StadiumTexture';
 
 export default function ClubsScreen() {
@@ -31,6 +32,8 @@ export default function ClubsScreen() {
       c.shortName.toLowerCase().includes(search.toLowerCase()) ||
       c.stadiumName.toLowerCase().includes(search.toLowerCase())
   );
+
+  useTrackSearch(search, filteredClubs.length, 'clubs_tab');
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1a1b1e' : '#eef0f2' }]}>

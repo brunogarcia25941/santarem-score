@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { track } from '@/services/analytics';
 
 interface FavoritesContextType {
   favoriteClubIds: string[];
@@ -49,10 +50,12 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       : [...favoriteClubIds, clubId];
 
     setFavoriteClubIds(updated);
+    track(favoriteClubIds.includes(clubId) ? 'favorite.remove' : 'favorite.add', { club_id: clubId, total: updated.length });
     await AsyncStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(updated));
   };
 
   const completeOnboarding = async () => {
+    track('onboarding.complete', { favorites: favoriteClubIds.length });
     setIsOnboardingCompleted(true);
     await AsyncStorage.setItem(ONBOARDING_STORAGE_KEY, 'true');
   };

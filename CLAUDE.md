@@ -107,6 +107,32 @@ etc.
   clubes" com botão "Adicionar" e os Favoritos têm "Adicionar favoritos"; ambos
   abrem `(onboarding)/select-clubs` (com pesquisa; fora da 1.ª utilização mostra
   seta de voltar e "Concluir"). Perfil sem foto: email + papel.
+- ✅ **Registos (logs)** — três camadas, só o admin lê (RLS), no SQL Editor/Table Editor:
+  - `audit_log` (servidor, à prova de adulteração: trigger bloqueia UPDATE/DELETE):
+    quem (`actor_email`, papel, IP, user-agent), quando e o quê. Triggers em
+    `matches` (`match.start/halftime/second_half/end/score_change/rescheduled/
+    reminder_sent`...), `match_events` (`event.add/delete` com tipo, minuto, jogador),
+    `profiles` (`profile.change`), login (`auth.login`, via `last_sign_in_at`), mais
+    `lineup.set` (dentro de `set_match_lineup`, com o onze antes/depois) e `admin.*`
+    escritos pela Edge Function `admin-manage-users` (criar conta, mudar clube, retirar
+    acesso, repor palavra-passe — nunca a palavra-passe — e `admin.denied`). `source`:
+    app / retroactive / system / db / admin_function. Escrita central em
+    `audit_private.write()` (schema não exposto pela API). Vista `audit_log_readable`.
+  - `app_events` (utilização anónima por aparelho: `device_id` aleatório, `session_id`,
+    `user_id` só se houver sessão — vem do token): escrito pela app em lotes via RPC
+    `log_app_events` (anon pode chamar; valida nome do evento, tamanho, ~120/min por
+    aparelho). Cliente: `src/services/analytics.ts` (`track`, `trackError`, `flush`);
+    `AnalyticsTracker` em `app/_layout.tsx` (app.open/background/foreground, screen.view,
+    app.error global). Eventos: favorite.add/remove, onboarding.complete, search(+result_open),
+    share.start/done, club.tab, standings.division, home.filter, push.permission/register/pref,
+    notification.received/open, login.attempt/success/failure(email tentado)/logout,
+    delegate.* (event_submit/queued/rejected, queue_sync, period, event_delete, lineup,
+    result) e error.caught. Switch "Ajudar a melhorar a app" no Perfil (por omissão
+    ligado; ver nota de consentimento RGPD). Retenção 180 dias (pg_cron). Vistas
+    `app_events_daily`, `club_favorites_stats`.
+  - `notification_log`: cada envio de push (destinatários, enviados, tokens inválidos, erro,
+    duração), escrito pela Edge Function `send-goal-notification`. Retenção 365 dias.
+  A hora (`at`) é a do servidor; o golo registado offline fica com a hora da sincronização.
 - ✅ Painel do delegado: só regista golos/cartões com o jogo começado e não
   terminado (RLS garante; admin isento, para o registo retroativo); lista com
   apagar (corrige o marcador via trigger); sobe com o teclado

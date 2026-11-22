@@ -18,6 +18,7 @@ import { StadiumTexture } from '@/components/StadiumTexture';
 import { GestureDetector } from 'react-native-gesture-handler';
 import Animated from 'react-native-reanimated';
 import { useSwipeableTabs } from '@/hooks/useSwipeableTabs';
+import { track } from '@/services/analytics';
 
 interface StandingRow {
   club_id: string;
@@ -61,6 +62,7 @@ export default function CompetitionsScreen() {
     currentIndex: selectedDivisionIndex === -1 ? 0 : selectedDivisionIndex,
     onChangeIndex: (index) => {
       Haptics.selectionAsync();
+      track('standings.division', { division: DIVISIONS[index].id, via: 'swipe' });
       setSelectedDivision(DIVISIONS[index].id);
     },
   });
@@ -108,6 +110,7 @@ export default function CompetitionsScreen() {
               ]}
               onPress={() => {
                 Haptics.selectionAsync();
+                track('standings.division', { division: div.id, via: 'tap' });
                 setSelectedDivision(div.id);
               }}
             >

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '@/services/supabase';
+import { track, flush } from '@/services/analytics';
 
 export type ProfileRole = 'user' | 'club_moderator' | 'admin';
 
@@ -74,11 +75,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [loadProfile]);
 
   const signIn = async (email: string, password: string) => {
+    track('login.attempt');
     const { error } = await supabase.auth.signInWithPassword({ email, password });
+    // Em falhas guarda-se o email tentado (nunca a palavra-passe) para detetar tentativas de intrusão.
+    if (error) track('login.failure', { email: email.trim().toLowerCase().slice(0, 80), reason: error.message.slice(0, 80) });
+    else track('login.success');
+    flush();
     return { error: error ? error.message : null };
   };
 
   const signOut = async () => {
+    track('login.logout');
+    await flush();
     await supabase.auth.signOut();
   };
 

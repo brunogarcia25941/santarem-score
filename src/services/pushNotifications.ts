@@ -4,6 +4,7 @@ import Constants from 'expo-constants';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { supabase } from './supabase';
+import { track } from './analytics';
 
 const PUSH_PREFS_KEY = '@santarem_score:push_prefs';
 const LEGACY_PUSH_ENABLED_KEY = '@santarem_score:push_enabled'; // versão antiga: um só switch (golos)
@@ -51,6 +52,7 @@ Notifications.setNotificationHandler({
     // golos e cartões (mostrar também o do sistema duplicava o aviso). Início e
     // fim de jogo não têm banner próprio, por isso esses aparecem pelo sistema.
     const type = notification.request.content.data?.type;
+    track('notification.received', { type: type ?? null, foreground: true });
     const show = type === 'MATCH_START' || type === 'MATCH_END';
     return {
       shouldShowAlert: show,
@@ -74,6 +76,7 @@ async function getExpoPushToken(): Promise<string | null> {
     const req = await Notifications.requestPermissionsAsync();
     status = req.status;
   }
+  track('push.permission', { status });
   if (status !== 'granted') return null;
 
   if (Platform.OS === 'android') {
@@ -117,8 +120,10 @@ export async function syncPushToken(favoriteClubIds: string[], prefs: PushPrefs)
 
   if (error) {
     console.error('Erro a sincronizar push token:', error);
+    track('push.register', { ok: false, code: (error as any).code ?? null });
     return false;
   }
+  track('push.register', { ok: true, favorites: favoriteClubIds.length, goals: prefs.goals, start: prefs.start, end: prefs.end });
   return true;
 }
 
@@ -134,4 +139,5 @@ export async function disablePushToken(): Promise<void> {
   const token = cachedToken ?? (await Notifications.getExpoPushTokenAsync().catch(() => null))?.data;
   if (!token) return;
   await supabase.rpc('unregister_push_token', { p_token: token });
+  track('push.unregister');
 }

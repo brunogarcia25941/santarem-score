@@ -18,6 +18,7 @@ import { Match } from '@/types';
 import { supabase } from '@/services/supabase';
 import { brand, getTheme } from '@/constants/theme';
 import { useKeyboardHeight, useSheetBottomPadding } from '@/hooks/useKeyboardHeight';
+import { track, trackError } from '@/services/analytics';
 
 type EventType = 'GOAL' | 'OWN_GOAL' | 'YELLOW_CARD' | 'RED_CARD';
 
@@ -189,10 +190,12 @@ export function RegisterResultModal({ visible, match, existingEvents, onClose, o
     setSaving(false);
 
     if (error) {
+      trackError('delegate.result', error, { match_id: match.id });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert('Erro ao guardar', error.message);
       return;
     }
+    track('delegate.result', { match_id: match.id, home, away, events: events.length });
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     onSaved();
     onClose();

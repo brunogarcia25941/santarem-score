@@ -20,6 +20,7 @@ import { supabase } from '@/services/supabase';
 import { brand, getTheme } from '@/constants/theme';
 import { currentMinute } from '@/utils/matchClock';
 import { useKeyboardHeight, useSheetBottomPadding } from '@/hooks/useKeyboardHeight';
+import { track, trackError } from '@/services/analytics';
 import { useNow } from '@/hooks/useNow';
 
 type Tab = 'period' | 'goal' | 'card' | 'events';
@@ -131,9 +132,11 @@ export function DelegadoPanelModal({
           });
           setBusy(false);
           if (error) {
+            trackError('delegate.period', error, { match_id: match.id, action: step.action });
             Alert.alert('Erro', error.message);
             return;
           }
+          track('delegate.period', { match_id: match.id, action: step.action });
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
           onChanged();
         },
@@ -199,9 +202,11 @@ export function DelegadoPanelModal({
           onPress: async () => {
             const { error } = await supabase.from('match_events').delete().eq('id', evt.id);
             if (error) {
+              trackError('delegate.event_delete', error, { match_id: match.id, event_id: evt.id });
               Alert.alert('Erro', error.message);
               return;
             }
+            track('delegate.event_delete', { match_id: match.id, event_id: evt.id });
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             onChanged();
           },

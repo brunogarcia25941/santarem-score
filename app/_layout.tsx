@@ -11,6 +11,7 @@ import { vibrateGoal } from '@/services/notifications';
 import { supabase } from '@/services/supabase';
 import { syncOfflineQueue } from '@/services/matchActions';
 import { anyPushEnabled, getPushPrefs, syncPushToken } from '@/services/pushNotifications';
+import { flush, initAnalytics, newSession, setScreen, track } from '@/services/analytics';
 
 function RealtimeGoalWatcher() {
   const { favoriteClubIds } = useFavorites();
@@ -118,10 +119,79 @@ function NotificationNavigator() {
     handledId.current = notificationId;
 
     const matchId = response.notification.request.content.data?.matchId;
+    track('notification.open', { type: response.notification.request.content.data?.type ?? null, match_id: typeof matchId === 'string' ? matchId : null });
     if (typeof matchId !== 'string') return;
     if (pathname === `/match/${matchId}`) return;
     router.push(`/match/${matchId}`);
   }, [response, navigationState?.key]);
+
+  return null;
+}
+
+/** Nome estável de um ecrã (sem ids) + o id, para os registos agruparem bem. */
+function describePath(path: string): { screen: string; props: Record<string, string> } {
+  const match = path.match(/^\/match\/([^/]+)/);
+  if (match) return { screen: '/match/[id]', props: { match_id: match[1] } };
+  const club = path.match(/^\/club\/([^/]+)/);
+  if (club) return { screen: '/club/[id]', props: { club_id: club[1] } };
+  return { screen: path || '/', props: {} };
+}
+
+/**
+ * Registo de utilização: arranque da app, sessões, ecrãs vistos, ir para segundo plano e erros
+ * não apanhados. Os eventos específicos (favoritos, partilhas...) são registados onde acontecem.
+ */
+function AnalyticsTracker() {
+  const pathname = usePathname();
+  const backgroundedAt = useRef<number | null>(null);
+  const activeSince = useRef<number>(Date.now());
+
+  useEffect(() => {
+    initAnalytics().then(() => track('app.open'));
+
+    // Erros não apanhados do JavaScript (a app pode fechar logo a seguir: envia-se já).
+    const g: any = globalThis;
+    const previous = g.ErrorUtils?.getGlobalHandler?.();
+    g.ErrorUtils?.setGlobalHandler?.((error: any, isFatal?: boolean) => {
+      try {
+        track('app.error', {
+          message: String(error?.message ?? error).slice(0, 300),
+          stack: String(error?.stack ?? '').slice(0, 800),
+          fatal: Boolean(isFatal),
+        });
+        flush();
+      } catch {
+        // nunca deixar o registo partir o tratamento do erro
+      }
+      previous?.(error, isFatal);
+    });
+
+    const sub = AppState.addEventListener('change', (state: AppStateStatus) => {
+      if (state === 'background' || state === 'inactive') {
+        if (backgroundedAt.current === null) {
+          backgroundedAt.current = Date.now();
+          track('app.background', { seconds: Math.round((Date.now() - activeSince.current) / 1000) });
+          flush();
+        }
+      } else if (state === 'active' && backgroundedAt.current !== null) {
+        // Mais de 30 min fora conta como uma sessão nova.
+        if (Date.now() - backgroundedAt.current > 30 * 60 * 1000) newSession();
+        backgroundedAt.current = null;
+        activeSince.current = Date.now();
+        track('app.foreground');
+      }
+    });
+    return () => {
+      sub.remove();
+      if (g.ErrorUtils?.setGlobalHandler && previous) g.ErrorUtils.setGlobalHandler(previous);
+    };
+  }, []);
+
+  useEffect(() => {
+    const { screen, props } = describePath(pathname);
+    setScreen(screen);
+    track('screen.view', { path: pathname, ...props });
+  }, [pathname]);
 
   return null;
 }
@@ -183,6 +253,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AuthProvider>
       <FavoritesProvider>
+        <AnalyticsTracker />
         <OfflineQueueSync />
         <PushTokenSync />
         <NotificationNavigator />

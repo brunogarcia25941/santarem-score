@@ -34,6 +34,7 @@ import { captureRef } from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import { Alert } from 'react-native';
 import { MatchShareCard } from '@/components/MatchShareCard';
+import { track, trackError } from '@/services/analytics';
 
 export default function MatchDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -145,6 +146,7 @@ export default function MatchDetailScreen() {
       return;
     }
     Haptics.selectionAsync();
+    track('share.start', { match_id: id, status: match?.status });
     badgesReady.current = 0;
     setSharing(true);
   };
@@ -155,7 +157,9 @@ export default function MatchDetailScreen() {
       await new Promise((r) => setTimeout(r, 250));
       const uri = await captureRef(shareCardRef, { format: 'png', quality: 1, width: 1080, height: 1350, result: 'tmpfile' });
       await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: 'Partilhar jogo' });
-    } catch {
+      track('share.done', { match_id: id });
+    } catch (err) {
+      trackError('share', err, { match_id: id });
       Alert.alert('Erro', 'Não foi possível criar a imagem para partilhar.');
     } finally {
       setSharing(false);

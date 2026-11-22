@@ -25,6 +25,7 @@ import {
   syncPushToken,
   disablePushToken,
 } from '@/services/pushNotifications';
+import { getAnalyticsEnabled, setAnalyticsEnabled, track } from '@/services/analytics';
 
 const ROLE_LABEL: Record<string, string> = {
   admin: 'Administrador',
@@ -40,9 +41,11 @@ export default function ProfileScreen() {
 
   const [prefs, setPrefs] = useState<PushPrefs>({ goals: false, start: false, end: false });
   const [togglingPush, setTogglingPush] = useState(false);
+  const [analyticsOn, setAnalyticsOn] = useState(true);
 
   useEffect(() => {
     getPushPrefs().then(setPrefs);
+    getAnalyticsEnabled().then(setAnalyticsOn);
   }, []);
 
   const handleToggle = async (key: keyof PushPrefs, value: boolean) => {
@@ -72,6 +75,7 @@ export default function ProfileScreen() {
       }
       await setPushPrefs(next);
       setPrefs(next);
+      track('push.pref', { key, value });
     } finally {
       setTogglingPush(false);
     }
@@ -127,6 +131,26 @@ export default function ProfileScreen() {
           <Text style={styles.notifsDisclaimer}>
             Recebes avisos dos jogos dos clubes que tens nos favoritos.
           </Text>
+        </View>
+
+        {/* Privacidade */}
+        <Text style={[styles.sectionTitle, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>Privacidade</Text>
+        <View style={[styles.card, { backgroundColor: isDark ? '#202226' : '#ffffff' }]}>
+          <View style={styles.settingRow}>
+            <View style={styles.settingText}>
+              <Text style={[styles.settingLabel, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>Ajudar a melhorar a app</Text>
+              <Text style={styles.settingSub}>
+                Envia dados anónimos de utilização (ecrãs abertos, favoritos, erros). Sem nome, email nem localização.
+              </Text>
+            </View>
+            <Switch
+              value={analyticsOn}
+              onValueChange={(v) => {
+                setAnalyticsOn(v);
+                setAnalyticsEnabled(v);
+              }}
+            />
+          </View>
         </View>
 
         {/* Preferências & Gestão */}

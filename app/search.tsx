@@ -19,6 +19,8 @@ import { ClubBadge } from '@/components/ClubBadge';
 import { HeaderShell } from '@/components/AppHeader';
 import { StadiumTexture } from '@/components/StadiumTexture';
 import { getTheme } from '@/constants/theme';
+import { useTrackSearch } from '@/hooks/useTrackSearch';
+import { track } from '@/services/analytics';
 
 /** Normaliza para pesquisar sem ligar a acentos nem a maiúsculas ("mação" = "macao"). */
 const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -42,6 +44,8 @@ export default function SearchScreen() {
     if (!q) return [];
     return clubs.filter((c) => norm(c.name).includes(q) || norm(c.shortName).includes(q) || norm(c.stadiumName).includes(q));
   }, [clubs, query]);
+
+  useTrackSearch(query, results.length, 'search_screen');
 
   return (
     <View style={[styles.container, { backgroundColor: t.base }]}>
@@ -90,6 +94,7 @@ export default function SearchScreen() {
                 style={[styles.row, { backgroundColor: t.surface, borderColor: t.border }]}
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  track('search.result_open', { club_id: item.id });
                   router.push(`/club/${item.id}`);
                 }}
               >
