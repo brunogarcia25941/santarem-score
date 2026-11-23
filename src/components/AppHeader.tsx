@@ -1,36 +1,25 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, useColorScheme } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { brand } from '@/constants/theme';
+import { brand, getTheme } from '@/constants/theme';
 
 /** Altura do conteúdo do cabeçalho (sem a barra de estado). */
-export const HEADER_CONTENT_HEIGHT = 56;
-
-/** Cores do cabeçalho: verde floresta em degradé, mais escuro no modo escuro. */
-export function useHeaderColors(): [string, string] {
-  const isDark = useColorScheme() === 'dark';
-  return isDark ? ['#102a1c', '#1f4d36'] : [brand.forestDeep, brand.forest];
-}
+export const HEADER_CONTENT_HEIGHT = 60;
 
 /**
- * Casca do cabeçalho de marca: degradé verde, margem da barra de estado e um fio âmbar por baixo.
- * Quem a usa mete lá dentro a linha de conteúdo. Serve os separadores, a pesquisa e a seleção de
- * clubes, para toda a app ter o mesmo cabeçalho (a barra de estado é sempre clara por cima dele).
+ * Casca do cabeçalho: tem a mesma cor de fundo dos ecrãs (o cabeçalho funde-se com o conteúdo, como
+ * os cartões), margem da barra de estado e um fio fino por baixo. Serve os separadores, a
+ * pesquisa e a seleção de clubes. Os cabeçalhos nativos dos ecrãs em pilha (`app/_layout.tsx`)
+ * usam as mesmas cores.
  */
 export function HeaderShell({ children }: { children: React.ReactNode }) {
   const insets = useSafeAreaInsets();
-  const colors = useHeaderColors();
+  const t = getTheme(useColorScheme() === 'dark');
   return (
-    <LinearGradient
-      colors={colors}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 0 }}
-      style={{ paddingTop: insets.top, borderBottomWidth: 2, borderBottomColor: brand.amber }}
-    >
+    <View style={{ paddingTop: insets.top, backgroundColor: t.base, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: t.border }}>
       <View style={styles.row}>{children}</View>
-    </LinearGradient>
+    </View>
   );
 }
 
@@ -38,31 +27,30 @@ interface AppHeaderProps {
   title: string;
   /** Mostra a lupa de pesquisa à direita. */
   onSearch?: () => void;
-  /** No Início o título é a marca ("Santarém Score"), com o nome do separador por baixo. */
+  /** No Início o título é a marca ("Santarém Score"). */
   brandTitle?: boolean;
 }
 
-/** Cabeçalho dos separadores: logótipo da app à esquerda, título e ações à direita. */
+/** Cabeçalho dos separadores: logótipo, título grande e ações em botões redondos. */
 export function AppHeader({ title, onSearch, brandTitle }: AppHeaderProps) {
+  const t = getTheme(useColorScheme() === 'dark');
   return (
     <HeaderShell>
       <Image source={require('../../assets/images/app-logo.png')} style={styles.logo} />
       <View style={styles.titleBox}>
-        {brandTitle ? (
-          <>
-            <Text style={styles.kicker}>AF SANTARÉM</Text>
-            <Text style={styles.title} numberOfLines={1}>Santarém Score</Text>
-          </>
-        ) : (
-          <>
-            <Text style={styles.kicker}>SANTARÉM SCORE</Text>
-            <Text style={styles.title} numberOfLines={1}>{title}</Text>
-          </>
-        )}
+        <Text style={styles.kicker}>{brandTitle ? 'AF SANTARÉM · DISTRITAL' : 'SANTARÉM SCORE'}</Text>
+        <Text style={[styles.title, { color: t.text }]} numberOfLines={1}>
+          {brandTitle ? 'Santarém Score' : title}
+        </Text>
       </View>
       {onSearch && (
-        <TouchableOpacity onPress={onSearch} hitSlop={10} style={styles.action} accessibilityLabel="Pesquisar">
-          <Ionicons name="search" size={22} color="#ffffff" />
+        <TouchableOpacity
+          onPress={onSearch}
+          hitSlop={8}
+          style={[styles.action, { backgroundColor: t.surface, borderColor: t.border }]}
+          accessibilityLabel="Pesquisar"
+        >
+          <Ionicons name="search" size={20} color={t.text} />
         </TouchableOpacity>
       )}
     </HeaderShell>
@@ -71,9 +59,9 @@ export function AppHeader({ title, onSearch, brandTitle }: AppHeaderProps) {
 
 const styles = StyleSheet.create({
   row: { height: HEADER_CONTENT_HEIGHT, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, gap: 12 },
-  logo: { width: 36, height: 36, borderRadius: 18 },
+  logo: { width: 38, height: 38, borderRadius: 19 },
   titleBox: { flex: 1 },
-  kicker: { color: brand.amber, fontSize: 10, fontWeight: '800', letterSpacing: 2 },
-  title: { color: '#ffffff', fontSize: 19, fontWeight: '800', marginTop: 1 },
-  action: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.12)' },
+  kicker: { color: brand.amberDeep, fontSize: 10, fontWeight: '800', letterSpacing: 2 },
+  title: { fontSize: 22, fontWeight: '800', letterSpacing: -0.3, marginTop: 1 },
+  action: { width: 40, height: 40, borderRadius: 20, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
 });

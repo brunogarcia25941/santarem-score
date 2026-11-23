@@ -19,7 +19,7 @@ import { useFavorites } from '@/context/FavoritesContext';
 import { ClubBadge } from '@/components/ClubBadge';
 import { HeaderShell } from '@/components/AppHeader';
 import { StadiumTexture } from '@/components/StadiumTexture';
-import { brand } from '@/constants/theme';
+import { brand, getTheme } from '@/constants/theme';
 
 /** Normaliza para pesquisar sem ligar a acentos nem a maiúsculas. */
 const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -33,6 +33,7 @@ export default function SelectClubsScreen() {
   const router = useRouter();
   const isDark = useColorScheme() === 'dark';
   const insets = useSafeAreaInsets();
+  const t = getTheme(isDark);
   const { clubs, loading, error, refresh } = useClubs();
   const { isFavorite, toggleFavorite, completeOnboarding, favoriteClubIds, isOnboardingCompleted } = useFavorites();
   const [search, setSearch] = useState('');
@@ -66,14 +67,14 @@ export default function SelectClubsScreen() {
       <HeaderShell>
         {isOnboardingCompleted ? (
           <TouchableOpacity onPress={() => router.back()} hitSlop={10} accessibilityLabel="Voltar">
-            <Ionicons name="arrow-back" size={24} color="#ffffff" />
+            <Ionicons name="arrow-back" size={24} color={t.text} />
           </TouchableOpacity>
         ) : (
           <Image source={require('../../assets/images/app-logo.png')} style={styles.logo} />
         )}
         <View style={{ flex: 1 }}>
           <Text style={styles.kicker}>SANTARÉM SCORE</Text>
-          <Text style={styles.headerTitle}>{isOnboardingCompleted ? 'Clubes favoritos' : 'Bem-vindo'}</Text>
+          <Text style={[styles.headerTitle, { color: t.text }]}>{isOnboardingCompleted ? 'Clubes favoritos' : 'Bem-vindo'}</Text>
         </View>
       </HeaderShell>
 
@@ -182,9 +183,9 @@ export default function SelectClubsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  logo: { width: 36, height: 36, borderRadius: 18 },
-  kicker: { color: brand.amber, fontSize: 10, fontWeight: '800', letterSpacing: 2 },
-  headerTitle: { color: '#ffffff', fontSize: 19, fontWeight: '800', marginTop: 1 },
+  logo: { width: 38, height: 38, borderRadius: 19 },
+  kicker: { color: brand.amberDeep, fontSize: 10, fontWeight: '800', letterSpacing: 2 },
+  headerTitle: { fontSize: 22, fontWeight: '800', letterSpacing: -0.3, marginTop: 1 },
   intro: { paddingHorizontal: 16, paddingTop: 14, paddingBottom: 10, gap: 12 },
   subtitle: { fontSize: 13, lineHeight: 19 },
   searchBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, height: 44, borderRadius: 10, borderWidth: 1, gap: 8 },

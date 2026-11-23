@@ -37,7 +37,7 @@ function uuid(): string {
 
 let deviceId: string | null = null;
 let sessionId = uuid();
-let enabled = true;
+let enabled = false; // só passa a true depois de o utilizador aceitar
 let ready = false;
 let queue: QueuedEvent[] = [];
 let currentScreen: string | undefined;
@@ -52,27 +52,36 @@ export async function initAnalytics(): Promise<void> {
       deviceId = uuid();
       await AsyncStorage.setItem(DEVICE_KEY, deviceId);
     }
-    enabled = (await AsyncStorage.getItem(ENABLED_KEY)) !== 'false';
+    enabled = (await AsyncStorage.getItem(ENABLED_KEY)) === 'true';
   } catch {
     // sem armazenamento: usa um id só desta sessão
     deviceId = deviceId ?? uuid();
   }
   ready = true;
+  // Sem consentimento nada do que se acumulou antes do arranque pode ser enviado.
+  if (!enabled) queue = [];
   if (!timer) timer = setInterval(() => void flush(), FLUSH_EVERY_MS);
   if (queue.length >= FLUSH_AT) void flush();
 }
 
-export async function getAnalyticsEnabled(): Promise<boolean> {
+/** true = aceitou, false = recusou, null = ainda não respondeu (mostra-se o aviso). */
+export async function getAnalyticsConsent(): Promise<boolean | null> {
   try {
-    return (await AsyncStorage.getItem(ENABLED_KEY)) !== 'false';
+    const v = await AsyncStorage.getItem(ENABLED_KEY);
+    return v === null ? null : v === 'true';
   } catch {
-    return true;
+    return null;
   }
 }
 
+export async function getAnalyticsEnabled(): Promise<boolean> {
+  return (await getAnalyticsConsent()) === true;
+}
+
 export async function setAnalyticsEnabled(value: boolean): Promise<void> {
-  if (!value) {
-    // regista o pedido antes de desligar, para ficar escrito que o utilizador optou por sair
+  if (!value && enabled) {
+    // Estava ligado: regista a saída antes de desligar. (Quem recusa logo no aviso inicial
+    // nunca chegou a estar ligado, por isso não se envia nada.)
     track('analytics.opt_out');
     await flush();
   }
@@ -84,6 +93,7 @@ export async function setAnalyticsEnabled(value: boolean): Promise<void> {
     // ignora
   }
   if (value) track('analytics.opt_in');
+  if (value) void flush();
 }
 
 /** Ecrã atual: vai junto de todos os eventos seguintes. */
@@ -96,7 +106,8 @@ export function newSession() {
 }
 
 export function track(event: string, props?: Record<string, unknown>) {
-  if (!enabled) return;
+  // Antes de arrancar guarda-se (a decisão ainda não foi lida); depois só com consentimento.
+  if (ready && !enabled) return;
   queue.push({ event, t: Date.now(), screen: currentScreen, props });
   if (queue.length > MAX_QUEUE) queue = queue.slice(queue.length - MAX_QUEUE);
   if (ready && queue.length >= FLUSH_AT) void flush();

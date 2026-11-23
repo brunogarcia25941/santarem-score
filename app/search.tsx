@@ -51,23 +51,23 @@ export default function SearchScreen() {
     <View style={[styles.container, { backgroundColor: t.base }]}>
       <HeaderShell>
         <TouchableOpacity onPress={() => router.back()} hitSlop={10} accessibilityLabel="Voltar">
-          <Ionicons name="arrow-back" size={24} color="#ffffff" />
+          <Ionicons name="arrow-back" size={24} color={t.text} />
         </TouchableOpacity>
-        <View style={styles.inputBox}>
-          <Ionicons name="search" size={18} color="rgba(255,255,255,0.7)" />
+        <View style={[styles.inputBox, { backgroundColor: t.surface, borderColor: t.border }]}>
+          <Ionicons name="search" size={18} color={t.textMuted} />
           <TextInput
             autoFocus
             placeholder="Pesquisar clube ou estádio..."
-            placeholderTextColor="rgba(255,255,255,0.6)"
+            placeholderTextColor={t.textFaint}
             value={query}
             onChangeText={setQuery}
             autoCorrect={false}
             returnKeyType="search"
-            style={styles.input}
+            style={[styles.input, { color: t.text }]}
           />
           {query.length > 0 && (
             <TouchableOpacity onPress={() => setQuery('')} hitSlop={10}>
-              <Ionicons name="close-circle" size={18} color="rgba(255,255,255,0.7)" />
+              <Ionicons name="close-circle" size={18} color={t.textMuted} />
             </TouchableOpacity>
           )}
         </View>
@@ -121,12 +121,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: 'rgba(255,255,255,0.14)',
+    borderWidth: 1,
     borderRadius: 12,
     paddingHorizontal: 12,
     height: 40,
   },
-  input: { flex: 1, color: '#ffffff', fontSize: 15, paddingVertical: 0 },
+  input: { flex: 1, fontSize: 15, paddingVertical: 0 },
   empty: { textAlign: 'center', marginTop: 40, fontSize: 13 },
   row: { flexDirection: 'row', alignItems: 'center', padding: 12, borderRadius: 12, borderWidth: 1, marginBottom: 10 },
   name: { fontSize: 14, fontWeight: '700' },

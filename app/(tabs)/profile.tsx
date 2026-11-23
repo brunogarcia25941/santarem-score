@@ -140,7 +140,7 @@ export default function ProfileScreen() {
             <View style={styles.settingText}>
               <Text style={[styles.settingLabel, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>Ajudar a melhorar a app</Text>
               <Text style={styles.settingSub}>
-                Envia dados anónimos de utilização (ecrãs abertos, favoritos, erros). Sem nome, email nem localização.
+                Envia dados anónimos de utilização (ecrãs abertos, favoritos, pesquisas, erros). Sem nome, email nem localização. Podes mudar a qualquer momento.
               </Text>
             </View>
             <Switch

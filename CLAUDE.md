@@ -96,13 +96,15 @@ etc.
 - ✅ Barra de separadores e painéis (Modal) somam `useSafeAreaInsets().bottom`
   (`useSheetBottomPadding`): com a navegação de 3 botões do Android (edge-to-edge)
   ficavam por baixo deles.
-- ✅ Cabeçalho de marca (`AppHeader`/`HeaderShell`): degradé verde com fio âmbar,
-  logótipo da app, título e (no Início) lupa. Os ecrãs em pilha usam o mesmo verde
-  nos cabeçalhos nativos; a barra de estado é sempre clara (`StatusBar style="light"`
-  na raiz) porque TODOS os ecrãs têm cabeçalho verde. Quem criar um ecrã novo deve
-  usar um destes cabeçalhos. A lupa abre `app/search.tsx` (clube ou estádio, sem
-  ligar a acentos). Fundo `StadiumTexture grass` também em Competições, Favoritos,
-  Clubes, Perfil, ficha do clube, pesquisa e seleção de clubes.
+- ✅ Cabeçalho (`AppHeader`/`HeaderShell`): integrado no fundo (mesma cor dos ecrãs,
+  fio fino por baixo), logótipo da app, título grande e, no Início, lupa em botão
+  redondo. Os cabeçalhos nativos dos ecrãs em pilha usam as mesmas cores (fundo = cor do
+  ecrã, texto forte), por isso a barra de estado volta a ser `auto`. A lupa abre
+  `app/search.tsx` (clube ou estádio, sem ligar a acentos). Quem criar um ecrã novo deve
+  usar um destes cabeçalhos. (A 1.ª versão era um degradé verde com fio âmbar; ficou
+  no histórico do git, commit ce38a3f, se se quiser voltar.) Fundo `StadiumTexture grass`
+  também em Competições, Favoritos, Clubes, Perfil, ficha do clube, pesquisa e seleção
+  de clubes.
 - ✅ Sem clubes favoritos é permitido: o Início mostra um cartão "Segue os teus
   clubes" com botão "Adicionar" e os Favoritos têm "Adicionar favoritos"; ambos
   abrem `(onboarding)/select-clubs` (com pesquisa; fora da 1.ª utilização mostra
@@ -127,8 +129,9 @@ etc.
     share.start/done, club.tab, standings.division, home.filter, push.permission/register/pref,
     notification.received/open, login.attempt/success/failure(email tentado)/logout,
     delegate.* (event_submit/queued/rejected, queue_sync, period, event_delete, lineup,
-    result) e error.caught. Switch "Ajudar a melhorar a app" no Perfil (por omissão
-    ligado; ver nota de consentimento RGPD). Retenção 180 dias (pg_cron). Vistas
+    result) e error.caught. **Consentimento**: aviso na 1.ª abertura (`ConsentPrompt`, Aceitar/Recusar); sem
+    resposta ou com recusa nada é recolhido nem enviado (`track` ignora). Pode mudar-se
+    no Perfil → Privacidade ("Ajudar a melhorar a app"). Retenção 180 dias (pg_cron). Vistas
     `app_events_daily`, `club_favorites_stats`.
   - `notification_log`: cada envio de push (destinatários, enviados, tokens inválidos, erro,
     duração), escrito pela Edge Function `send-goal-notification`. Retenção 365 dias.

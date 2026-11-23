@@ -12,6 +12,7 @@ import { supabase } from '@/services/supabase';
 import { syncOfflineQueue } from '@/services/matchActions';
 import { anyPushEnabled, getPushPrefs, syncPushToken } from '@/services/pushNotifications';
 import { flush, initAnalytics, newSession, setScreen, track } from '@/services/analytics';
+import { ConsentPrompt } from '@/components/ConsentPrompt';
 
 function RealtimeGoalWatcher() {
   const { favoriteClubIds } = useFavorites();
@@ -236,15 +237,15 @@ export default function RootLayout() {
   // nunca ser o branco por omissão do react-native-screens — era isso
   // que causava o "flash" branco ao abrir/fechar páginas.
   const screenBg = isDark ? '#1a1b1e' : '#eef0f2';
-  // Cabeçalhos em verde de marca (iguais aos dos separadores), com texto claro.
-  const headerBg = isDark ? '#102a1c' : '#1f4d36';
-  const headerText = '#ffffff';
+  // Os cabeçalhos têm a mesma cor do fundo dos ecrãs (funde-se com o conteúdo), com texto forte.
+  const headerBg = screenBg;
+  const headerText = isDark ? '#f4f4f5' : '#1a1b1e';
 
   const headerOptions = {
     headerShown: true,
     headerStyle: { backgroundColor: headerBg },
     headerTintColor: headerText,
-    headerTitleStyle: { color: headerText, fontWeight: '700' as const },
+    headerTitleStyle: { color: headerText, fontWeight: '800' as const, fontSize: 18 },
     headerShadowVisible: false,
     contentStyle: { backgroundColor: screenBg },
   };
@@ -303,8 +304,8 @@ export default function RootLayout() {
             }}
           />
         </Stack>
-        {/* Todos os ecrãs têm cabeçalho verde escuro, por isso os ícones da barra de estado são sempre claros. */}
-        <StatusBar style="light" />
+        <ConsentPrompt />
+        <StatusBar style="auto" />
       </FavoritesProvider>
       </AuthProvider>
     </GestureHandlerRootView>
