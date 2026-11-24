@@ -107,7 +107,7 @@ etc.
   de clubes.
 - ✅ Sem clubes favoritos é permitido: o Início mostra um cartão "Segue os teus
   clubes" com botão "Adicionar" e os Favoritos têm "Adicionar favoritos"; ambos
-  abrem `(onboarding)/select-clubs` (com pesquisa; fora da 1.ª utilização mostra
+  abrem `(onboarding)/select-clubs` (grelha de 3 colunas por divisão, com pesquisa; fora da 1.ª utilização mostra
   seta de voltar e "Concluir"). Perfil sem foto: email + papel.
 - ✅ **Registos (logs)** — três camadas, só o admin lê (RLS), no SQL Editor/Table Editor:
   - `audit_log` (servidor, à prova de adulteração: trigger bloqueia UPDATE/DELETE):

@@ -446,11 +446,11 @@ export default function MatchDetailScreen() {
 const styles = StyleSheet.create({
   shareBtn: { position: 'absolute', top: 12, right: 12, zIndex: 5 },
   container: { flex: 1 },
-  content: { padding: 16 },
+  content: { padding: 16, paddingBottom: 32 },
   scoreCard: {
   padding: 18,
   borderRadius: 16,
-  marginBottom: 14,
+  marginBottom: 16,
   borderWidth: 1,
   borderColor: 'rgba(255, 255, 255, 0.05)',
   shadowColor: '#000',
@@ -510,7 +510,7 @@ const styles = StyleSheet.create({
   },
   gpsButtonText: { color: '#ffffff', fontWeight: '700', fontSize: 13 },
   tickerTitle: { fontSize: 16, fontWeight: '800', marginBottom: 10 },
-  tickerCard: { padding: 16, borderRadius: 16 },
+  tickerCard: { padding: 16, borderRadius: 16, marginBottom: 16 },
   eventRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8 },
   eventSide: { flex: 1 },
   eventMinute: { width: 44, textAlign: 'center', fontSize: 13, fontWeight: '700', color: '#71717a' },

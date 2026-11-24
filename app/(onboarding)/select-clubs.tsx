@@ -7,6 +7,7 @@ import {
   TextInput,
   TouchableOpacity,
   Image,
+  useWindowDimensions,
   useColorScheme,
   ActivityIndicator,
 } from 'react-native';
@@ -20,9 +21,24 @@ import { ClubBadge } from '@/components/ClubBadge';
 import { HeaderShell } from '@/components/AppHeader';
 import { StadiumTexture } from '@/components/StadiumTexture';
 import { brand, getTheme } from '@/constants/theme';
+import { Club } from '@/types';
 
 /** Normaliza para pesquisar sem ligar a acentos nem a maiúsculas. */
 const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
+const COLUMNS = 3;
+const GAP = 10;
+const SIDE = 16;
+
+const SECTIONS: { id: Club['division']; label: string }[] = [
+  { id: '1_divisao', label: '1.ª Divisão' },
+  { id: '2_divisao_a', label: '2.ª Divisão · Série A' },
+  { id: '2_divisao_b', label: '2.ª Divisão · Série B' },
+];
+
+type ListItem =
+  | { key: string; type: 'header'; label: string; count: number }
+  | { key: string; type: 'row'; clubs: Club[] };
 
 /**
  * Escolha dos clubes favoritos. É o ecrã da primeira utilização e também o que se abre a partir do
@@ -38,10 +54,26 @@ export default function SelectClubsScreen() {
   const { isFavorite, toggleFavorite, completeOnboarding, favoriteClubIds, isOnboardingCompleted } = useFavorites();
   const [search, setSearch] = useState('');
 
-  const filtered = useMemo(() => {
+  const { width } = useWindowDimensions();
+  const cardWidth = (width - SIDE * 2 - GAP * (COLUMNS - 1)) / COLUMNS;
+
+  // Secções por divisão, cada uma em linhas de 3 clubes (só as que têm resultados).
+  const items = useMemo<ListItem[]>(() => {
     const q = norm(search.trim());
-    if (!q) return clubs;
-    return clubs.filter((c) => norm(c.name).includes(q) || norm(c.shortName).includes(q) || norm(c.stadiumName).includes(q));
+    const matches = (c: Club) =>
+      !q || norm(c.name).includes(q) || norm(c.shortName).includes(q) || norm(c.stadiumName).includes(q);
+    const out: ListItem[] = [];
+    for (const section of SECTIONS) {
+      const list = clubs
+        .filter((c) => c.division === section.id && matches(c))
+        .sort((a, b) => a.shortName.localeCompare(b.shortName, 'pt'));
+      if (list.length === 0) continue;
+      out.push({ key: `h-${section.id}`, type: 'header', label: section.label, count: list.length });
+      for (let i = 0; i < list.length; i += COLUMNS) {
+        out.push({ key: `r-${section.id}-${i}`, type: 'row', clubs: list.slice(i, i + COLUMNS) });
+      }
+    }
+    return out;
   }, [clubs, search]);
 
   const handleContinue = async () => {
@@ -119,45 +151,61 @@ export default function SelectClubsScreen() {
           </View>
         ) : (
           <FlatList
-            data={filtered}
-            keyExtractor={(item) => item.id}
+            data={items}
+            keyExtractor={(item) => item.key}
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={[styles.listContent, { paddingBottom: 100 + insets.bottom }]}
             ListEmptyComponent={<Text style={styles.empty}>Nenhum clube encontrado.</Text>}
             renderItem={({ item }) => {
-              const selected = isFavorite(item.id);
+              if (item.type === 'header') {
+                return (
+                  <View style={styles.sectionHeader}>
+                    <Text style={[styles.sectionTitle, { color: t.text }]}>{item.label}</Text>
+                    <Text style={[styles.sectionCount, { color: t.textFaint }]}>{item.count} clubes</Text>
+                  </View>
+                );
+              }
               return (
-                <TouchableOpacity
-                  activeOpacity={0.8}
-                  style={[
-                    styles.clubCard,
-                    {
-                      backgroundColor: isDark ? '#202226' : '#ffffff',
-                      borderColor: selected ? brand.forest : isDark ? '#2c2e33' : '#e2e5e8',
-                    },
-                  ]}
-                  onPress={() => {
-                    Haptics.selectionAsync();
-                    toggleFavorite(item.id);
-                  }}
-                >
-                  <ClubBadge club={item} size={44} />
-
-                  <View style={styles.clubInfo}>
-                    <Text style={[styles.clubName, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>{item.shortName}</Text>
-                    <Text style={styles.stadium}>{item.stadiumName}</Text>
-                  </View>
-
-                  <View
-                    style={[
-                      styles.checkbox,
-                      selected && styles.checkboxActive,
-                      { borderColor: selected ? brand.forest : isDark ? '#3f3f46' : '#d4d4d8' },
-                    ]}
-                  >
-                    {selected && <Ionicons name="checkmark" size={16} color="#ffffff" />}
-                  </View>
-                </TouchableOpacity>
+                <View style={styles.gridRow}>
+                  {item.clubs.map((club) => {
+                    const selected = isFavorite(club.id);
+                    return (
+                      <TouchableOpacity
+                        key={club.id}
+                        activeOpacity={0.8}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected }}
+                        accessibilityLabel={club.shortName}
+                        style={[
+                          styles.tile,
+                          {
+                            width: cardWidth,
+                            backgroundColor: selected ? brand.forestMuted : t.surface,
+                            borderColor: selected ? brand.forest : t.border,
+                          },
+                        ]}
+                        onPress={() => {
+                          Haptics.selectionAsync();
+                          toggleFavorite(club.id);
+                        }}
+                      >
+                        {selected && (
+                          <View style={styles.tick}>
+                            <Ionicons name="checkmark" size={13} color="#ffffff" />
+                          </View>
+                        )}
+                        <ClubBadge club={club} size={54} />
+                        <Text style={[styles.tileName, { color: t.text }]} numberOfLines={2}>
+                          {club.shortName}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                  {/* células vazias mantêm as colunas alinhadas na última linha */}
+                  {Array.from({ length: COLUMNS - item.clubs.length }).map((_, i) => (
+                    <View key={`pad-${i}`} style={{ width: cardWidth }} />
+                  ))}
+                </View>
               );
             }}
           />
@@ -190,18 +238,37 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 13, lineHeight: 19 },
   searchBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, height: 44, borderRadius: 10, borderWidth: 1, gap: 8 },
   searchInput: { flex: 1, fontSize: 14 },
-  listContent: { paddingHorizontal: 16 },
+  listContent: { paddingHorizontal: SIDE },
   empty: { textAlign: 'center', color: '#71717a', marginTop: 30, fontSize: 13 },
   errorBox: { alignItems: 'center', marginTop: 40, paddingHorizontal: 20 },
   errorText: { color: '#71717a', fontSize: 14, textAlign: 'center', marginBottom: 12 },
   retryBtn: { backgroundColor: brand.forest, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8 },
   retryBtnText: { color: '#ffffff', fontWeight: '700' },
-  clubCard: { flexDirection: 'row', alignItems: 'center', padding: 14, borderRadius: 14, marginBottom: 10, borderWidth: 1.5 },
-  clubInfo: { flex: 1, marginLeft: 14 },
-  clubName: { fontSize: 16, fontWeight: '700' },
-  stadium: { fontSize: 12, marginTop: 2, color: '#71717a' },
-  checkbox: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
-  checkboxActive: { backgroundColor: brand.forest },
+  sectionHeader: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginTop: 14, marginBottom: 10 },
+  sectionTitle: { fontSize: 16, fontWeight: '800' },
+  sectionCount: { fontSize: 12, fontWeight: '600' },
+  gridRow: { flexDirection: 'row', gap: GAP, marginBottom: GAP },
+  tile: {
+    alignItems: 'center',
+    paddingTop: 16,
+    paddingBottom: 12,
+    paddingHorizontal: 6,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    minHeight: 124,
+  },
+  tick: {
+    position: 'absolute',
+    top: 7,
+    right: 7,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: brand.forest,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tileName: { fontSize: 12.5, fontWeight: '700', textAlign: 'center', marginTop: 10, lineHeight: 16 },
   footer: {
     position: 'absolute',
     bottom: 0,
