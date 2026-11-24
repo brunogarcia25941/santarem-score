@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, useColorScheme } from 'react-
 import * as Haptics from 'expo-haptics';
 import { Match } from '@/types';
 import { MatchCard } from './MatchCard';
+import { EmptyState } from './EmptyState';
 import { brand, getTheme } from '@/constants/theme';
 
 type Tab = 'results' | 'fixtures';
@@ -72,9 +73,12 @@ export function MatchTabs({
       </View>
 
       {list.length === 0 ? (
-        <Text style={[styles.empty, { color: t.textFaint }]}>
-          {activeTab === 'results' ? emptyResults : emptyFixtures}
-        </Text>
+        <EmptyState
+          compact
+          icon={activeTab === 'results' ? 'trophy-outline' : 'calendar-outline'}
+          title={activeTab === 'results' ? 'Sem resultados' : 'Sem jogos agendados'}
+          subtitle={activeTab === 'results' ? emptyResults : emptyFixtures}
+        />
       ) : (
         list.map((m) => <MatchCard key={m.id} match={m} />)
       )}

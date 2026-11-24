@@ -20,6 +20,8 @@ import { useFavorites } from '@/context/FavoritesContext';
 import { ClubBadge } from '@/components/ClubBadge';
 import { HeaderShell } from '@/components/AppHeader';
 import { StadiumTexture } from '@/components/StadiumTexture';
+import { TileGridSkeleton } from '@/components/Skeleton';
+import { EmptyState } from '@/components/EmptyState';
 import { brand, getTheme } from '@/constants/theme';
 import { Club } from '@/types';
 
@@ -141,7 +143,7 @@ export default function SelectClubsScreen() {
         </View>
 
         {loading ? (
-          <ActivityIndicator size="large" color="#2f6b4a" style={{ marginTop: 40 }} />
+          <TileGridSkeleton rows={4} />
         ) : error ? (
           <View style={styles.errorBox}>
             <Text style={styles.errorText}>Não foi possível carregar os clubes.</Text>
@@ -155,7 +157,7 @@ export default function SelectClubsScreen() {
             keyExtractor={(item) => item.key}
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={[styles.listContent, { paddingBottom: 100 + insets.bottom }]}
-            ListEmptyComponent={<Text style={styles.empty}>Nenhum clube encontrado.</Text>}
+            ListEmptyComponent={<EmptyState compact icon="search-outline" title="Nenhum clube encontrado" subtitle="Tenta outro nome de clube ou de estádio." />}
             renderItem={({ item }) => {
               if (item.type === 'header') {
                 return (

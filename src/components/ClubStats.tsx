@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, useColorScheme } from 'react-
 import { useRouter } from 'expo-router';
 import { Club, Match } from '@/types';
 import { getTheme } from '@/constants/theme';
+import { EmptyState } from '@/components/EmptyState';
 import { useStandings } from '@/hooks/useStandings';
 import { computeClubStats, FormResult, SplitRecord } from '@/utils/clubStats';
 
@@ -52,9 +53,12 @@ export function ClubStats({ club, matches }: ClubStatsProps) {
   if (stats.played === 0) {
     return (
       <View style={[styles.card, card]}>
-        <Text style={[styles.empty, { color: t.textFaint }]}>
-          Ainda não há jogos terminados para calcular estatísticas.
-        </Text>
+        <EmptyState
+          compact
+          icon="stats-chart-outline"
+          title="Sem estatísticas"
+          subtitle="Aparecem depois do primeiro jogo terminado deste clube."
+        />
       </View>
     );
   }

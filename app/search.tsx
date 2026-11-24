@@ -20,6 +20,8 @@ import { HeaderShell } from '@/components/AppHeader';
 import { StadiumTexture } from '@/components/StadiumTexture';
 import { getTheme } from '@/constants/theme';
 import { useTrackSearch } from '@/hooks/useTrackSearch';
+import { EmptyState } from '@/components/EmptyState';
+import { ClubRowSkeleton } from '@/components/Skeleton';
 import { track } from '@/services/analytics';
 
 /** Normaliza para pesquisar sem ligar a acentos nem a maiúsculas ("mação" = "macao"). */
@@ -76,7 +78,7 @@ export default function SearchScreen() {
       <SafeAreaView edges={['bottom', 'left', 'right']} style={{ flex: 1 }}>
         <StadiumTexture variant="grass" />
         {loading ? (
-          <ActivityIndicator size="large" color="#2f6b4a" style={{ marginTop: 24 }} />
+          <ClubRowSkeleton count={6} />
         ) : (
           <FlatList
             data={results}
@@ -84,9 +86,11 @@ export default function SearchScreen() {
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={{ padding: 16 }}
             ListEmptyComponent={
-              <Text style={[styles.empty, { color: t.textFaint }]}>
-                {query.trim() ? 'Nenhum clube ou estádio encontrado.' : 'Escreve o nome de um clube ou de um estádio.'}
-              </Text>
+              query.trim() ? (
+                <EmptyState icon="search-outline" title="Nada encontrado" subtitle="Não há clubes nem estádios com esse nome." />
+              ) : (
+                <EmptyState icon="search-outline" title="Pesquisar" subtitle="Escreve o nome de um clube ou de um estádio." />
+              )
             }
             renderItem={({ item }) => (
               <TouchableOpacity

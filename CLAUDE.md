@@ -136,6 +136,19 @@ etc.
   - `notification_log`: cada envio de push (destinatários, enviados, tokens inválidos, erro,
     duração), escrito pela Edge Function `send-goal-notification`. Retenção 365 dias.
   A hora (`at`) é a do servidor; o golo registado offline fica com a hora da sincronização.
+- ✅ Página do jogo com separadores (`SegmentedTabs`): Resumo (acontecimentos), Onzes,
+  Tabela (`MatchStandingsTab`: classificação da divisão com as duas equipas em
+  destaque, só carrega ao abrir) e Local. Todos os cartões têm 16 de intervalo.
+- ✅ Classificação (`StandingsTable`, usada em Competições e no jogo): faixa de cor à
+  esquerda por zona (`src/utils/standingsZones.ts`): 1.ª Div. — 1.º sobe (verde), 2
+  últimos descem (vermelho); 2.ª Div. (cada série) — 3 primeiros no apuramento de
+  campeão (âmbar). Favoritos com fundo verde suave + estrela; legenda e aviso de que
+  depende do regulamento. Se o regulamento mudar, é só editar `zoneFor`.
+- ✅ `MatchCard`: barra à esquerda (metade cor da casa, metade da visitante), jogo em
+  direto com contorno vermelho + etiqueta "AO VIVO · min" com ponto a pulsar, mais espaço.
+- ✅ Estados vazios (`EmptyState`) e esqueletos de carregamento (`Skeleton`,
+  `MatchCardSkeleton`, `TableSkeleton`, `ClubRowSkeleton`, `TileGridSkeleton`) em vez de
+  texto solto e rodinhas. Usar sempre estes componentes em listas novas.
 - ✅ Painel do delegado: só regista golos/cartões com o jogo começado e não
   terminado (RLS garante; admin isento, para o registo retroativo); lista com
   apagar (corrige o marcador via trigger); sobe com o teclado

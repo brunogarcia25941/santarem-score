@@ -17,6 +17,8 @@ import { useFavorites } from '@/context/FavoritesContext';
 import { ClubBadge } from '@/components/ClubBadge';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTrackSearch } from '@/hooks/useTrackSearch';
+import { EmptyState } from '@/components/EmptyState';
+import { ClubRowSkeleton } from '@/components/Skeleton';
 import { StadiumTexture } from '@/components/StadiumTexture';
 
 export default function ClubsScreen() {
@@ -63,7 +65,7 @@ export default function ClubsScreen() {
       </View>
 
       {loading ? (
-        <ActivityIndicator size="large" color="#2f6b4a" style={{ marginTop: 24 }} />
+        <ClubRowSkeleton count={8} />
       ) : error ? (
         <View style={styles.errorBox}>
           <Text style={styles.errorText}>Não foi possível carregar os clubes.</Text>
@@ -76,6 +78,9 @@ export default function ClubsScreen() {
           data={filteredClubs}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
+          ListEmptyComponent={
+            <EmptyState icon="search-outline" title="Nenhum clube encontrado" subtitle="Tenta outro nome de clube ou de estádio." />
+          }
           renderItem={({ item }) => {
             const favorite = isFavorite(item.id);
             return (

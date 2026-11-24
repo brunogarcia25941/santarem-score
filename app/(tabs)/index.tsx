@@ -30,6 +30,8 @@ import { groupMatches, defaultGroupIndex } from '@/utils/matchGroups';
 import { currentMinute } from '@/utils/matchClock';
 import { useNow } from '@/hooks/useNow';
 import { track } from '@/services/analytics';
+import { EmptyState } from '@/components/EmptyState';
+import { MatchCardSkeleton } from '@/components/Skeleton';
 
 const { width } = Dimensions.get('window');
 
@@ -279,26 +281,23 @@ export default function HomeScreen() {
         <GestureDetector gesture={panGesture}>
           <Animated.View style={[styles.matchesList, animatedStyle]}>
           {loading ? (
-            <ActivityIndicator size="large" color="#2f6b4a" style={{ marginTop: 24 }} />
-          ) : filteredMatches.length === 0 ? (
-            <View style={{ alignItems: 'center', marginTop: 20 }}>
-              <Text style={{ textAlign: 'center', color: isDark ? '#71717a' : '#a1a1aa' }}>
-                {selectedComp === 'Todas'
-                  ? 'Ainda não há jogos registados.'
-                  : `Sem jogos de teste na competição "${selectedComp}".`}
-              </Text>
-              {selectedComp !== 'Todas' && (
-                <TouchableOpacity
-                  onPress={() => {
-                    Haptics.selectionAsync();
-                    setSelectedComp('Todas');
-                  }}
-                  style={{ marginTop: 10 }}
-                >
-                  <Text style={{ color: '#2f6b4a', fontWeight: '700', fontSize: 13 }}>Ver todas as competições</Text>
-                </TouchableOpacity>
-              )}
+            <View>
+              {[0, 1, 2, 3].map((i) => (
+                <MatchCardSkeleton key={i} />
+              ))}
             </View>
+          ) : filteredMatches.length === 0 ? (
+            <EmptyState
+              icon="football-outline"
+              title={selectedComp === 'Todas' ? 'Ainda não há jogos' : 'Sem jogos nesta competição'}
+              subtitle={
+                selectedComp === 'Todas'
+                  ? 'Quando houver jogos registados aparecem aqui.'
+                  : `Não há jogos de "${selectedComp}" para mostrar.`
+              }
+              actionLabel={selectedComp !== 'Todas' ? 'Ver todas as competições' : undefined}
+              onAction={selectedComp !== 'Todas' ? () => setSelectedComp('Todas') : undefined}
+            />
           ) : (
             <>
               <View style={styles.groupNav}>

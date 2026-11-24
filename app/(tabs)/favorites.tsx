@@ -17,6 +17,8 @@ import { MatchTabs } from '@/components/MatchTabs';
 import { ClubBadge } from '@/components/ClubBadge';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StadiumTexture } from '@/components/StadiumTexture';
+import { EmptyState } from '@/components/EmptyState';
+import { MatchCardSkeleton } from '@/components/Skeleton';
 
 export default function FavoritesScreen() {
   const router = useRouter();
@@ -36,23 +38,19 @@ export default function FavoritesScreen() {
       <StadiumTexture variant="grass" />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {loading ? (
-          <ActivityIndicator size="large" color="#2f6b4a" style={{ marginTop: 40 }} />
-        ) : favoriteClubs.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Ionicons name="star-outline" size={54} color="#71717a" />
-            <Text style={[styles.emptyTitle, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>
-              Sem clubes favoritos
-            </Text>
-            <Text style={styles.emptySubtitle}>
-              Adiciona as equipas que queres acompanhar de perto para veres aqui os jogos delas e receberes avisos.
-            </Text>
-            <TouchableOpacity
-              style={styles.selectBtn}
-              onPress={() => router.push('/(onboarding)/select-clubs')}
-            >
-              <Text style={styles.selectBtnText}>Adicionar favoritos</Text>
-            </TouchableOpacity>
+          <View>
+            {[0, 1, 2].map((i) => (
+              <MatchCardSkeleton key={i} />
+            ))}
           </View>
+        ) : favoriteClubs.length === 0 ? (
+          <EmptyState
+            icon="star-outline"
+            title="Sem clubes favoritos"
+            subtitle="Adiciona as equipas que queres acompanhar de perto para veres aqui os jogos delas e receberes avisos."
+            actionLabel="Adicionar favoritos"
+            onAction={() => router.push('/(onboarding)/select-clubs')}
+          />
         ) : (
           <>
             <View style={styles.header}>

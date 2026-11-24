@@ -1,5 +1,5 @@
-import React, { useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, useColorScheme } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { Match } from '@/types';
@@ -9,6 +9,22 @@ import { formatMatchDateFull } from '@/utils/dateFormat';
 import { currentMinute } from '@/utils/matchClock';
 import { useNow } from '@/hooks/useNow';
 import { setMatchTransitionOrigin, measureView } from '@/utils/matchTransitionOrigin';
+
+/** Ponto vermelho que pulsa, para o jogo em direto se notar à primeira vista. */
+function PulsingDot() {
+  const opacity = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacity, { toValue: 0.2, duration: 700, useNativeDriver: true }),
+        Animated.timing(opacity, { toValue: 1, duration: 700, useNativeDriver: true }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [opacity]);
+  return <Animated.View style={[styles.liveDot, { opacity }]} />;
+}
 
 interface MatchCardProps {
   match: Match;
@@ -52,9 +68,17 @@ export function MatchCard({ match }: MatchCardProps) {
           borderColor: isDark ? '#2a2b30' : '#ffffff',
           shadowColor: isDark ? '#08080a' : '#c2c6cc',
         },
+        // Jogo em direto: contorno vermelho, para se distinguir logo na lista
+        isLive && { borderColor: 'rgba(239, 68, 68, 0.6)', borderWidth: 1.5 },
       ]}
       onPress={handlePress}
     >
+      {/* Barra à esquerda: metade de cima com a cor da casa, metade de baixo com a da visitante */}
+      <View style={styles.teamBar} pointerEvents="none">
+        <View style={{ flex: 1, backgroundColor: match.homeClub.primaryColor }} />
+        <View style={{ flex: 1, backgroundColor: match.awayClub.primaryColor }} />
+      </View>
+
       {/* Luz no topo do cartão (micro-chanfro neumórfico) */}
       <View style={[styles.topBevel, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#ffffff' }]} />
 
@@ -64,9 +88,9 @@ export function MatchCard({ match }: MatchCardProps) {
         </Text>
         {isLive && (
           <View style={styles.liveBadge}>
-            <View style={styles.liveDot} />
+            <PulsingDot />
             <Text style={styles.liveText}>
-              {match.status === 'halftime' ? 'INT' : `${minute}'`}
+              {match.status === 'halftime' ? 'INTERVALO' : `AO VIVO · ${minute}'`}
             </Text>
           </View>
         )}
@@ -126,10 +150,12 @@ export function MatchCard({ match }: MatchCardProps) {
 }
 
 const styles = StyleSheet.create({
+  teamBar: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 6 },
   card: {
     borderRadius: 14,
-    padding: 14,
-    marginBottom: 12,
+    padding: 16,
+    paddingLeft: 20,
+    marginBottom: 14,
     borderWidth: 1,
     overflow: 'hidden',
     position: 'relative',
@@ -165,11 +191,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(239, 68, 68, 0.15)',
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: 5,
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+    borderRadius: 8,
     borderWidth: 0.5,
-    borderColor: 'rgba(239, 68, 68, 0.4)',
+    borderColor: 'rgba(239, 68, 68, 0.45)',
   },
   liveDot: {
     width: 6,
@@ -180,8 +206,9 @@ const styles = StyleSheet.create({
   },
   liveText: {
     color: '#ef4444',
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '800',
+    letterSpacing: 0.4,
   },
   statusText: {
     fontSize: 11,

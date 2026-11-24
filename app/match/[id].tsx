@@ -34,7 +34,18 @@ import { captureRef } from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import { Alert } from 'react-native';
 import { MatchShareCard } from '@/components/MatchShareCard';
+import { SegmentedTabs, SegmentedTab } from '@/components/SegmentedTabs';
+import { EmptyState } from '@/components/EmptyState';
+import { MatchStandingsTab } from '@/components/MatchStandingsTab';
+import { Skeleton } from '@/components/Skeleton';
 import { track, trackError } from '@/services/analytics';
+
+const MATCH_TABS: SegmentedTab<'summary' | 'lineups' | 'table' | 'venue'>[] = [
+  { id: 'summary', label: 'Resumo', icon: 'list-outline' },
+  { id: 'lineups', label: 'Onzes', icon: 'people-outline' },
+  { id: 'table', label: 'Tabela', icon: 'podium-outline' },
+  { id: 'venue', label: 'Local', icon: 'location-outline' },
+];
 
 export default function MatchDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -51,6 +62,7 @@ export default function MatchDetailScreen() {
   const [loading, setLoading] = useState(!transitionOrigin?.initialMatch);
   const [isDelegadoModalVisible, setIsDelegadoModalVisible] = useState(false);
   const [isResultModalVisible, setIsResultModalVisible] = useState(false);
+  const [tab, setTab] = useState<'summary' | 'lineups' | 'table' | 'venue'>('summary');
   const now = useNow(match?.status === 'live' || (match?.status === 'finished' && Boolean(match.finishedAt)));
 
   async function fetchMatchData() {
@@ -199,8 +211,20 @@ export default function MatchDetailScreen() {
 
   if (loading || !match) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1a1b1e' : '#eef0f2', justifyContent: 'center' }]}>
-        <ActivityIndicator size="large" color="#2f6b4a" />
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1a1b1e' : '#eef0f2' }]}>
+        <View style={styles.content}>
+          <View style={[styles.scoreCard, { backgroundColor: isDark ? '#202226' : '#ffffff', alignItems: 'center' }]}>
+            <Skeleton width="60%" height={12} />
+            <Skeleton width="40%" height={11} style={{ marginTop: 10, marginBottom: 22 }} />
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+              <Skeleton width={48} height={48} radius={24} />
+              <Skeleton width={96} height={44} radius={10} />
+              <Skeleton width={48} height={48} radius={24} />
+            </View>
+          </View>
+          <Skeleton height={48} radius={14} style={{ marginBottom: 16 }} />
+          <Skeleton height={140} radius={16} />
+        </View>
       </SafeAreaView>
     );
   }
@@ -308,12 +332,33 @@ export default function MatchDetailScreen() {
           </TouchableOpacity>
         ) : null}
 
+        {/* Separadores do jogo */}
+        <SegmentedTabs<'summary' | 'lineups' | 'table' | 'venue'>
+          tabs={MATCH_TABS}
+          value={tab}
+          onChange={(id) => {
+            track('match.tab', { match_id: match.id, tab: id });
+            setTab(id);
+          }}
+        />
+
+        {tab === 'summary' && (
+          <>
         {/* Acontecimentos em tempo real: casa à esquerda, visitante à direita */}
         <View style={[styles.tickerCard, { backgroundColor: isDark ? '#202226' : '#ffffff' }]}>
           {events.length === 0 ? (
-            <Text style={{ color: '#71717a', textAlign: 'center', paddingVertical: 10 }}>
-              Sem eventos registados até ao momento.
-            </Text>
+            <EmptyState
+              compact
+              icon="football-outline"
+              title="Sem acontecimentos"
+              subtitle={
+                match.status === 'scheduled'
+                  ? 'O jogo ainda não começou. Os golos e os cartões aparecem aqui em direto.'
+                  : match.status === 'finished'
+                    ? 'Não foram registados golos nem cartões neste jogo.'
+                    : 'Ainda não há golos nem cartões neste jogo.'
+              }
+            />
           ) : (
             events.map((evt) => {
               // Um autogolo conta para a equipa adversária, por isso aparece do lado
@@ -365,8 +410,27 @@ export default function MatchDetailScreen() {
           )}
         </View>
 
-        {lineups.length > 0 && <LineupCard match={match} lineups={lineups} />}
+          </>
+        )}
 
+        {tab === 'lineups' &&
+          (lineups.length > 0 ? (
+            <LineupCard match={match} lineups={lineups} />
+          ) : (
+            <View style={[styles.tickerCard, { backgroundColor: isDark ? '#202226' : '#ffffff' }]}>
+              <EmptyState
+                compact
+                icon="people-outline"
+                title="Onze inicial por anunciar"
+                subtitle="Os delegados dos clubes podem adicioná-lo antes do jogo."
+              />
+            </View>
+          ))}
+
+        {tab === 'table' && <MatchStandingsTab match={match} />}
+
+        {tab === 'venue' && (
+          <>
         {/* Localização & GPS */}
         <View style={[styles.locationCard, { backgroundColor: isDark ? '#202226' : '#ffffff' }]}>
           <View style={styles.locationHeader}>
@@ -388,6 +452,8 @@ export default function MatchDetailScreen() {
             </TouchableOpacity>
           </View>
         </View>
+          </>
+        )}
       </ScrollView>
 
       {/* Cartaz para partilhar: desenhado fora do ecrã só enquanto se cria a imagem */}
