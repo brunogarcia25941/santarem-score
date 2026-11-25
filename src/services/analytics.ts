@@ -6,7 +6,7 @@ import { supabase } from './supabase';
 /**
  * Registo de utilização. Cada aparelho tem um identificador aleatório (não é o IMEI nem nada
  * do aparelho; apaga-se ao desinstalar) e envia eventos em lotes para `log_app_events`. Quando
- * há sessão de delegado, o servidor associa o utilizador pelo token (nunca vem do cliente).
+ * há sessão de colaborador, o servidor associa o utilizador pelo token (nunca vem do cliente).
  * Pode ser desligado no Perfil (`setAnalyticsEnabled(false)`): nesse caso nada é enviado.
  *
  * Nunca pode partir a app: tudo aqui apanha os próprios erros.

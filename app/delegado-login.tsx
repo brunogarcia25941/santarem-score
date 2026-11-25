@@ -44,7 +44,7 @@ export default function DelegadoLoginScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1a1b1e' : '#eef0f2' }]}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
         <View style={styles.content}>
-          <Text style={[styles.title, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>Área de Delegados</Text>
+          <Text style={[styles.title, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>Área de Colaboradores</Text>
           <Text style={[styles.subtitle, { color: isDark ? '#a1a1aa' : '#71717a' }]}>
             Entra com a conta que a equipa técnica te criou. Sem conta? Contacta-nos para obteres acesso.
           </Text>

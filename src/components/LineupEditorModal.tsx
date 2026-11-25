@@ -47,7 +47,7 @@ const serialize = (draft: DraftPlayer[]) =>
 /**
  * Editor do onze inicial. Pode preencher-se só uma equipa ou as duas, e cada
  * jogador com número, nome ou ambos. Guarda as equipas que foram alteradas;
- * outro delegado pode voltar mais tarde e completar o que souber.
+ * outro colaborador pode voltar mais tarde e completar o que souber.
  */
 export function LineupEditorModal({ visible, match, lineups, onClose, onSaved }: Props) {
   const isDark = useColorScheme() === 'dark';
@@ -193,7 +193,7 @@ export function LineupEditorModal({ visible, match, lineups, onClose, onSaved }:
 
           <Text style={[styles.hint, { color: t.textFaint }]}>
             Preenche o que souberes: só números, só nomes, ou os dois. O 1.º jogador é o guarda-redes (GR) — toca em
-            GR noutra linha para mudar. Podes deixar uma equipa por preencher: o delegado dela (ou tu, mais tarde)
+            GR noutra linha para mudar. Podes deixar uma equipa por preencher: o colaborador dela (ou tu, mais tarde)
             pode completar.
           </Text>
 

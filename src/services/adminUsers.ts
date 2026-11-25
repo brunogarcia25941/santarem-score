@@ -35,7 +35,7 @@ export const adminUsers = {
   list: () => call<{ users: ManagedUser[] }>({ action: 'list' }),
   create: (email: string, password: string, clubId: string) =>
     call<{ ok: true; user_id: string }>({ action: 'create', email, password, club_id: clubId }),
-  /** clubId null = retirar o acesso de delegado. */
+  /** clubId null = retirar o acesso de colaborador. */
   setClub: (userId: string, clubId: string | null) =>
     call<{ ok: true }>({ action: 'set_club', user_id: userId, club_id: clubId }),
   resetPassword: (userId: string, password: string) =>

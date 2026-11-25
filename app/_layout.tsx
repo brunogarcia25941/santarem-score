@@ -300,7 +300,7 @@ export default function RootLayout() {
             options={{
               ...headerOptions,
               presentation: 'modal',
-              title: 'Área de Delegados',
+              title: 'Área de Colaboradores',
             }}
           />
           <Stack.Screen

@@ -120,9 +120,9 @@ function NewDelegateCard({ clubs, onCreated }: { clubs: Club[]; onCreated: () =>
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     const club = clubs.find((c) => c.id === clubId);
     const message =
-      `Santarém Score — acesso de delegado${club ? ' (' + club.shortName + ')' : ''}\n` +
+      `Santarém Score — acesso de colaborador${club ? ' (' + club.shortName + ')' : ''}\n` +
       `Email: ${email.trim().toLowerCase()}\nPalavra-passe: ${password}\n` +
-      `Entra em Perfil → Área Reservada de Delegados.`;
+      `Entra em Perfil → Área Reservada de Colaboradores.`;
     Alert.alert('Conta criada', `${email.trim().toLowerCase()}\nPalavra-passe: ${password}\n\nGuarda ou envia estes dados agora: a palavra-passe não volta a aparecer.`, [
       { text: 'Fechar' },
       { text: 'Partilhar', onPress: () => Share.share({ message }) },
@@ -136,7 +136,7 @@ function NewDelegateCard({ clubs, onCreated }: { clubs: Club[]; onCreated: () =>
     <View style={[styles.card, { backgroundColor: t.surface }]}>
       <TouchableOpacity style={styles.cardHeader} onPress={() => setOpen((o) => !o)}>
         <Ionicons name="person-add-outline" size={20} color={brand.forest} />
-        <Text style={[styles.cardTitle, { color: t.text }]}>Novo delegado</Text>
+        <Text style={[styles.cardTitle, { color: t.text }]}>Novo colaborador</Text>
         <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={18} color={t.textFaint} />
       </TouchableOpacity>
 
@@ -224,7 +224,7 @@ function UserRow({ user, club, clubs, onChanged }: { user: ManagedUser; club?: C
         <View style={{ flex: 1 }}>
           <Text style={[styles.userEmail, { color: t.text }]} numberOfLines={1}>{user.email}</Text>
           <Text style={[styles.hint, { color: hasAccess ? brand.forest : t.textFaint }]} numberOfLines={1}>
-            {hasAccess ? (club?.shortName ?? user.club_id) : 'Sem acesso de delegado'} · {formatLastLogin(user.last_sign_in_at)}
+            {hasAccess ? (club?.shortName ?? user.club_id) : 'Sem acesso de colaborador'} · {formatLastLogin(user.last_sign_in_at)}
           </Text>
         </View>
         <Ionicons name={mode ? 'chevron-up' : 'chevron-down'} size={18} color={t.textFaint} />
@@ -362,7 +362,7 @@ export default function AdminScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={brand.forest} />}
       >
         <Text style={[styles.intro, { color: t.textMuted }]}>
-          Cria contas para os colaboradores e escolhe o clube a que têm acesso. Cada delegado só regista golos, cartões e onzes
+          Cria contas para os colaboradores e escolhe o clube a que têm acesso. Cada um só regista golos, cartões e onzes
           nos jogos do seu clube.
         </Text>
 
@@ -380,8 +380,8 @@ export default function AdminScreen() {
           </View>
         ) : (
           <>
-            <Text style={[styles.sectionTitle, { color: t.text }]}>Delegados ({delegates.length})</Text>
-            {delegates.length === 0 && <Text style={[styles.hint, { color: t.textFaint, marginBottom: 16 }]}>Ainda não há delegados.</Text>}
+            <Text style={[styles.sectionTitle, { color: t.text }]}>Colaboradores ({delegates.length})</Text>
+            {delegates.length === 0 && <Text style={[styles.hint, { color: t.textFaint, marginBottom: 16 }]}>Ainda não há colaboradores.</Text>}
             {delegates.map((u) => (
               <UserRow key={u.id} user={u} club={u.club_id ? clubById.get(u.club_id) : undefined} clubs={clubs} onChanged={load} />
             ))}

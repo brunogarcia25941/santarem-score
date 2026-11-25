@@ -20,7 +20,7 @@ interface Props {
 /**
  * Onze inicial: casa à esquerda, visitante à direita (como os acontecimentos).
  * Cada jogador pode ter só número, só nome, ou ambos — depende do que o
- * delegado soube registar.
+ * colaborador soube registar.
  */
 export function LineupCard({ match, lineups }: Props) {
   const isDark = useColorScheme() === 'dark';

@@ -32,8 +32,8 @@ import { getAnalyticsEnabled, setAnalyticsEnabled, track } from '@/services/anal
 
 const ROLE_LABEL: Record<string, string> = {
   admin: 'Administrador',
-  club_moderator: 'Delegado de Clube',
-  user: 'Utilizador Geral',
+  club_moderator: 'Colaborador de Clube',
+  user: 'Sem acesso de colaborador',
 };
 
 export default function ProfileScreen() {
@@ -133,22 +133,25 @@ export default function ProfileScreen() {
     }
   };
 
-  const isDelegate = Boolean(session);
-  const roleLabel = profile ? ROLE_LABEL[profile.role] || 'Utilizador Geral' : 'Utilizador Geral';
+  const isSignedIn = Boolean(session);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1a1b1e' : '#eef0f2' }]}>
       <StadiumTexture variant="grass" />
       <ScrollView contentContainerStyle={styles.content}>
-        {/* Conta: só o email e o papel (sem foto) */}
-        <View style={[styles.card, { backgroundColor: isDark ? '#202226' : '#ffffff' }]}>
-          <Text style={[styles.userName, { color: isDark ? '#eef0f2' : '#1a1b1e' }]} numberOfLines={1}>
-            {isDelegate ? session!.user.email : 'Sem sessão iniciada'}
-          </Text>
-          <View style={styles.rolePill}>
-            <Text style={styles.rolePillText}>{isDelegate ? roleLabel : 'Utilizador Geral'}</Text>
+        {/* Conta: só aparece com sessão iniciada (email + papel, sem foto) */}
+        {session && (
+          <View style={[styles.card, { backgroundColor: isDark ? '#202226' : '#ffffff' }]}>
+            <Text style={[styles.userName, { color: isDark ? '#eef0f2' : '#1a1b1e' }]} numberOfLines={1}>
+              {session.user.email}
+            </Text>
+            {profile && (
+              <View style={styles.rolePill}>
+                <Text style={styles.rolePillText}>{ROLE_LABEL[profile.role] ?? ROLE_LABEL.user}</Text>
+              </View>
+            )}
           </View>
-        </View>
+        )}
 
         {/* Notificações */}
         <Text style={[styles.sectionTitle, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>Notificações Push</Text>
@@ -243,7 +246,7 @@ export default function ProfileScreen() {
               <TouchableOpacity style={styles.actionRow} onPress={() => router.push('/admin' as any)}>
                 <Ionicons name="people-outline" size={20} color="#2f6b4a" />
                 <Text style={[styles.actionRowText, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>
-                  Zona Admin · Delegados
+                  Zona Admin · Colaboradores
                 </Text>
                 <Ionicons name="chevron-forward" size={18} color="#71717a" />
               </TouchableOpacity>
@@ -251,17 +254,17 @@ export default function ProfileScreen() {
             </>
           )}
 
-          {isDelegate ? (
+          {isSignedIn ? (
             <TouchableOpacity style={styles.actionRow} onPress={() => signOut()}>
               <Ionicons name="log-out-outline" size={20} color="#dc2626" />
-              <Text style={[styles.actionRowText, { color: '#dc2626' }]}>Terminar Sessão de Delegado</Text>
+              <Text style={[styles.actionRowText, { color: '#dc2626' }]}>Terminar Sessão</Text>
               <Ionicons name="chevron-forward" size={18} color="#71717a" />
             </TouchableOpacity>
           ) : (
             <TouchableOpacity style={styles.actionRow} onPress={() => router.push('/delegado-login')}>
               <Ionicons name="shield-checkmark-outline" size={20} color="#2f6b4a" />
               <Text style={[styles.actionRowText, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>
-                Área Reservada de Delegados
+                Área Reservada de Colaboradores
               </Text>
               <Ionicons name="chevron-forward" size={18} color="#71717a" />
             </TouchableOpacity>

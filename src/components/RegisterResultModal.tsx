@@ -49,7 +49,7 @@ const EVENT_LABEL: Record<EventType, string> = {
 };
 
 /**
- * Registar / corrigir o resultado de um jogo (admin sempre; delegado só até 1
+ * Registar / corrigir o resultado de um jogo (admin sempre; colaborador só até 1
  * hora depois do fim — a base de dados é que garante). O resultado é a
  * verdade; os acontecimentos são opcionais e podem estar incompletos (ex.:
  * só se conhece um dos marcadores). A função SQL `admin_register_match_result`

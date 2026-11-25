@@ -310,7 +310,7 @@ export default function MatchDetailScreen() {
         </View>
 
         {/* Ponto de entrada de quem gere o jogo. Onze inicial e registar/corrigir resultado
-            estão dentro do painel. O delegado perde o acesso 1 hora depois do fim; o admin nunca. */}
+            estão dentro do painel. O colaborador perde o acesso 1 hora depois do fim; o admin nunca. */}
         {panelAllowed ? (
           <TouchableOpacity
             style={styles.delegadoBtn}
@@ -320,7 +320,7 @@ export default function MatchDetailScreen() {
             }}
           >
             <Ionicons name="create-outline" size={18} color="#ffffff" />
-            <Text style={styles.delegadoBtnText}>Painel do Delegado</Text>
+            <Text style={styles.delegadoBtnText}>Painel do Colaborador</Text>
           </TouchableOpacity>
         ) : !session ? (
           <TouchableOpacity
@@ -328,7 +328,7 @@ export default function MatchDetailScreen() {
             onPress={() => router.push('/delegado-login')}
           >
             <Ionicons name="lock-closed-outline" size={16} color="#71717a" />
-            <Text style={styles.delegadoLoginBtnText}>Sou delegado deste jogo — iniciar sessão</Text>
+            <Text style={styles.delegadoLoginBtnText}>Sou colaborador neste jogo — iniciar sessão</Text>
           </TouchableOpacity>
         ) : null}
 
@@ -422,7 +422,7 @@ export default function MatchDetailScreen() {
                 compact
                 icon="people-outline"
                 title="Onze inicial por anunciar"
-                subtitle="Os delegados dos clubes podem adicioná-lo antes do jogo."
+                subtitle="Os colaboradores dos clubes podem adicioná-lo antes do jogo."
               />
             </View>
           ))}

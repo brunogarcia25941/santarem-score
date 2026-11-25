@@ -265,7 +265,7 @@ export function DelegadoPanelModal({
         >
           <View style={styles.header}>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.title, { color: t.text }]}>Painel de Delegado</Text>
+              <Text style={[styles.title, { color: t.text }]}>Painel do Colaborador</Text>
               <Text style={[styles.matchSubtitle, { color: t.textMuted }]} numberOfLines={1}>
                 {match.homeClub.shortName} {match.homeScore}-{match.awayScore} {match.awayClub.shortName} · {statusText}
               </Text>
@@ -445,7 +445,7 @@ export function DelegadoPanelModal({
             )}
           </ScrollView>
 
-          {/* Atalhos para as outras zonas do delegado/admin. Escondidos com o teclado aberto para não roubarem espaço. */}
+          {/* Atalhos para as outras zonas do colaborador/admin. Escondidos com o teclado aberto para não roubarem espaço. */}
           {keyboardHeight === 0 && (
             <View style={[styles.footer, { borderTopColor: t.border }]}>
               <TouchableOpacity style={[styles.footerBtn, { borderColor: t.border }]} onPress={onOpenLineup}>

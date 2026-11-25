@@ -150,8 +150,9 @@ etc.
   últimos descem (vermelho); 2.ª Div. (cada série) — 3 primeiros no apuramento de
   campeão (âmbar). Favoritos com fundo verde suave + estrela; legenda e aviso de que
   depende do regulamento. Se o regulamento mudar, é só editar `zoneFor`.
-- ✅ `MatchCard`: barra à esquerda (metade cor da casa, metade da visitante), jogo em
-  direto com contorno vermelho + etiqueta "AO VIVO · min" com ponto a pulsar, mais espaço.
+- ✅ `MatchCard`: jogo em direto com contorno vermelho + etiqueta "AO VIVO · min" com
+  ponto a pulsar, mais espaço. (O Bruno recusou a barra de cores das equipas à
+  esquerda — não repor.)
 - ✅ Estados vazios (`EmptyState`) e esqueletos de carregamento (`Skeleton`,
   `MatchCardSkeleton`, `TableSkeleton`, `ClubRowSkeleton`, `TileGridSkeleton`) em vez de
   texto solto e rodinhas. Usar sempre estes componentes em listas novas.
@@ -188,6 +189,15 @@ etc.
   em build real (Expo Go não tem os módulos nativos). Falta o Bruno gerar a
   credencial FCM V1 e ligá-la no EAS (`eas credentials`) antes da próxima
   build Android — sem isso o token nem chega a ser gerado.
+
+## Terminologia: "Colaborador" (não "Delegado")
+
+Em toda a interface o papel `club_moderator` chama-se **Colaborador**: pode ser um
+delegado ou um adepto assíduo a quem o Bruno decida dar acesso a um clube. As secções
+antigas deste ficheiro ainda dizem "delegado" — é a mesma coisa. Nomes internos
+mantêm-se (rota `delegado-login`, `DelegadoPanelModal`, eventos `delegate.*`, nomes das
+policies RLS). Textos novos visíveis ao utilizador usam sempre "colaborador". No Perfil,
+o cartão da conta só aparece com sessão iniciada.
 
 ## Stack técnica
 

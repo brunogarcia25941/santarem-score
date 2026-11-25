@@ -73,12 +73,6 @@ export function MatchCard({ match }: MatchCardProps) {
       ]}
       onPress={handlePress}
     >
-      {/* Barra à esquerda: metade de cima com a cor da casa, metade de baixo com a da visitante */}
-      <View style={styles.teamBar} pointerEvents="none">
-        <View style={{ flex: 1, backgroundColor: match.homeClub.primaryColor }} />
-        <View style={{ flex: 1, backgroundColor: match.awayClub.primaryColor }} />
-      </View>
-
       {/* Luz no topo do cartão (micro-chanfro neumórfico) */}
       <View style={[styles.topBevel, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#ffffff' }]} />
 
@@ -150,11 +144,9 @@ export function MatchCard({ match }: MatchCardProps) {
 }
 
 const styles = StyleSheet.create({
-  teamBar: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 6 },
   card: {
     borderRadius: 14,
     padding: 16,
-    paddingLeft: 20,
     marginBottom: 14,
     borderWidth: 1,
     overflow: 'hidden',
