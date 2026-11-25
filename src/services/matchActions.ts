@@ -42,7 +42,7 @@ async function setQueue(queue: MatchEventInput[]) {
 export async function submitMatchEvent(event: MatchEventInput) {
   try {
     const data = await insertEvent(event);
-    track('delegate.event_submit', { match_id: event.matchId, club_id: event.clubId, event_type: event.eventType, minute: event.minute, ok: true });
+    track('collaborator.event_submit', { match_id: event.matchId, club_id: event.clubId, event_type: event.eventType, minute: event.minute, ok: true });
     // Se a submissão direta funcionou e havia eventos antigos em fila,
     // aproveita para tentar despachá-los também.
     syncOfflineQueue().catch(() => {});
@@ -52,7 +52,7 @@ export async function submitMatchEvent(event: MatchEventInput) {
     // não começou...) não se resolvem a tentar de novo — não vão para a fila.
     // Só falhas de rede (sem `code`) ficam guardadas para reenvio.
     if (typeof err?.code === 'string') {
-      track('delegate.event_rejected', { match_id: event.matchId, event_type: event.eventType, code: err.code, message: String(err.message ?? '').slice(0, 120) });
+      track('collaborator.event_rejected', { match_id: event.matchId, event_type: event.eventType, code: err.code, message: String(err.message ?? '').slice(0, 120) });
       throw new Error(
         err.code === '42501'
           ? 'Sem permissão, ou o jogo ainda não começou / já terminou.'
@@ -60,7 +60,7 @@ export async function submitMatchEvent(event: MatchEventInput) {
       );
     }
     console.error('Erro na submissão do evento, a guardar localmente:', err);
-    track('delegate.event_queued', { match_id: event.matchId, event_type: event.eventType });
+    track('collaborator.event_queued', { match_id: event.matchId, event_type: event.eventType });
     const queue = await getQueue();
     queue.push(event);
     await setQueue(queue);
@@ -95,7 +95,7 @@ export async function syncOfflineQueue(): Promise<{ synced: number; remaining: n
 
   await setQueue(stillPending);
 
-  if (queue.length > 0) track('delegate.queue_sync', { synced, remaining: stillPending.length, dropped: queue.length - synced - stillPending.length });
+  if (queue.length > 0) track('collaborator.queue_sync', { synced, remaining: stillPending.length, dropped: queue.length - synced - stillPending.length });
   if (synced > 0) {
     console.log(`[offline-sync] ${synced} evento(s) sincronizado(s), ${stillPending.length} ainda pendente(s).`);
   }

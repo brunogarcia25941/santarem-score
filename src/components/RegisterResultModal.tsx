@@ -190,12 +190,12 @@ export function RegisterResultModal({ visible, match, existingEvents, onClose, o
     setSaving(false);
 
     if (error) {
-      trackError('delegate.result', error, { match_id: match.id });
+      trackError('collaborator.result', error, { match_id: match.id });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert('Erro ao guardar', error.message);
       return;
     }
-    track('delegate.result', { match_id: match.id, home, away, events: events.length });
+    track('collaborator.result', { match_id: match.id, home, away, events: events.length });
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     onSaved();
     onClose();

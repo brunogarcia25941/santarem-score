@@ -14,7 +14,7 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-export default function DelegadoLoginScreen() {
+export default function ColaboradorLoginScreen() {
   const isDark = useColorScheme() === 'dark';
   const router = useRouter();
   const { signIn } = useAuth();

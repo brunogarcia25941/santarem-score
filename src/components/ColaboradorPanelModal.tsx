@@ -26,7 +26,7 @@ import { useNow } from '@/hooks/useNow';
 type Tab = 'period' | 'goal' | 'card' | 'events';
 type PeriodAction = 'start_first_half' | 'end_first_half' | 'start_second_half' | 'end_match';
 
-interface DelegadoPanelModalProps {
+interface ColaboradorPanelModalProps {
   visible: boolean;
   match: Match;
   /** Linhas de `match_events` deste jogo (para listar e apagar). */
@@ -48,7 +48,7 @@ const EVENT_LABEL: Record<string, string> = {
   RED_CARD: '🟥 Vermelho',
 };
 
-export function DelegadoPanelModal({
+export function ColaboradorPanelModal({
   visible,
   match,
   events,
@@ -57,7 +57,7 @@ export function DelegadoPanelModal({
   onOpenLineup,
   resultLabel,
   onOpenResult,
-}: DelegadoPanelModalProps) {
+}: ColaboradorPanelModalProps) {
   const isDark = useColorScheme() === 'dark';
   const t = getTheme(isDark);
   const keyboardHeight = useKeyboardHeight();
@@ -132,11 +132,11 @@ export function DelegadoPanelModal({
           });
           setBusy(false);
           if (error) {
-            trackError('delegate.period', error, { match_id: match.id, action: step.action });
+            trackError('collaborator.period', error, { match_id: match.id, action: step.action });
             Alert.alert('Erro', error.message);
             return;
           }
-          track('delegate.period', { match_id: match.id, action: step.action });
+          track('collaborator.period', { match_id: match.id, action: step.action });
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
           onChanged();
         },
@@ -202,11 +202,11 @@ export function DelegadoPanelModal({
           onPress: async () => {
             const { error } = await supabase.from('match_events').delete().eq('id', evt.id);
             if (error) {
-              trackError('delegate.event_delete', error, { match_id: match.id, event_id: evt.id });
+              trackError('collaborator.event_delete', error, { match_id: match.id, event_id: evt.id });
               Alert.alert('Erro', error.message);
               return;
             }
-            track('delegate.event_delete', { match_id: match.id, event_id: evt.id });
+            track('collaborator.event_delete', { match_id: match.id, event_id: evt.id });
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             onChanged();
           },

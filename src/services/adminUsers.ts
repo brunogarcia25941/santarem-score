@@ -3,7 +3,7 @@ import { supabase } from '@/services/supabase';
 export interface ManagedUser {
   id: string;
   email: string | null;
-  role: 'user' | 'club_moderator' | 'admin';
+  role: 'user' | 'collaborator' | 'admin';
   club_id: string | null;
   created_at: string;
   last_sign_in_at: string | null;

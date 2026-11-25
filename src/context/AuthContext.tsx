@@ -3,35 +3,35 @@ import type { Session } from '@supabase/supabase-js';
 import { supabase } from '@/services/supabase';
 import { track, flush } from '@/services/analytics';
 
-export type ProfileRole = 'user' | 'club_moderator' | 'admin';
+export type ProfileRole = 'user' | 'collaborator' | 'admin';
 
-export interface DelegateProfile {
+export interface CollaboratorProfile {
   id: string;
   role: ProfileRole;
-  moderatedClubId: string | null;
+  collaboratorClubId: string | null;
 }
 
 interface AuthContextType {
   session: Session | null;
-  profile: DelegateProfile | null;
+  profile: CollaboratorProfile | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
-  /** Admin pode tudo; club_moderator só o seu próprio clube. */
-  canModerateClub: (clubId: string) => boolean;
+  /** Admin pode tudo; collaborator só o seu próprio clube. */
+  canManageClub: (clubId: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<DelegateProfile | null>(null);
+  const [profile, setProfile] = useState<CollaboratorProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   const loadProfile = useCallback(async (userId: string) => {
     const { data, error } = await supabase
       .from('profiles')
-      .select('id, role, moderated_club_id')
+      .select('id, role, collaborator_club_id')
       .eq('id', userId)
       .single();
 
@@ -39,7 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setProfile({
         id: data.id,
         role: data.role,
-        moderatedClubId: data.moderated_club_id,
+        collaboratorClubId: data.collaborator_club_id,
       });
     } else {
       setProfile(null);
@@ -90,14 +90,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut();
   };
 
-  const canModerateClub = (clubId: string) => {
+  const canManageClub = (clubId: string) => {
     if (!profile) return false;
     if (profile.role === 'admin') return true;
-    return profile.role === 'club_moderator' && profile.moderatedClubId === clubId;
+    return profile.role === 'collaborator' && profile.collaboratorClubId === clubId;
   };
 
   return (
-    <AuthContext.Provider value={{ session, profile, loading, signIn, signOut, canModerateClub }}>
+    <AuthContext.Provider value={{ session, profile, loading, signIn, signOut, canManageClub }}>
       {children}
     </AuthContext.Provider>
   );

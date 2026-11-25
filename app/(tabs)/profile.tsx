@@ -32,7 +32,7 @@ import { getAnalyticsEnabled, setAnalyticsEnabled, track } from '@/services/anal
 
 const ROLE_LABEL: Record<string, string> = {
   admin: 'Administrador',
-  club_moderator: 'Colaborador de Clube',
+  collaborator: 'Colaborador de Clube',
   user: 'Sem acesso de colaborador',
 };
 
@@ -261,7 +261,7 @@ export default function ProfileScreen() {
               <Ionicons name="chevron-forward" size={18} color="#71717a" />
             </TouchableOpacity>
           ) : (
-            <TouchableOpacity style={styles.actionRow} onPress={() => router.push('/delegado-login')}>
+            <TouchableOpacity style={styles.actionRow} onPress={() => router.push('/colaborador-login')}>
               <Ionicons name="shield-checkmark-outline" size={20} color="#2f6b4a" />
               <Text style={[styles.actionRowText, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>
                 Área Reservada de Colaboradores

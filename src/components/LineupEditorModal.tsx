@@ -130,7 +130,7 @@ export function LineupEditorModal({ visible, match, lineups, onClose, onSaved }:
         })),
       });
       if (error) {
-        trackError('delegate.lineup', error, { match_id: match.id, club_id: c.id });
+        trackError('collaborator.lineup', error, { match_id: match.id, club_id: c.id });
         setSaving(false);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         Alert.alert(`Erro ao guardar (${c.shortName})`, error.message);
@@ -138,7 +138,7 @@ export function LineupEditorModal({ visible, match, lineups, onClose, onSaved }:
       }
     }
     setSaving(false);
-    track('delegate.lineup', { match_id: match.id, clubs: dirtyClubs.map((c) => c.id) });
+    track('collaborator.lineup', { match_id: match.id, clubs: dirtyClubs.map((c) => c.id) });
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     onSaved();
     onClose();

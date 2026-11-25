@@ -17,7 +17,7 @@ import { mapClub } from '@/services/clubs';
 import { Match } from '@/types';
 import { ClubBadgeLink } from '@/components/ClubBadgeLink';
 import { useAuth } from '@/context/AuthContext';
-import { DelegadoPanelModal } from '@/components/DelegadoPanelModal';
+import { ColaboradorPanelModal } from '@/components/ColaboradorPanelModal';
 import { RegisterResultModal } from '@/components/RegisterResultModal';
 import { LineupCard, LineupRow } from '@/components/LineupCard';
 import { LineupEditorModal } from '@/components/LineupEditorModal';
@@ -51,7 +51,7 @@ export default function MatchDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const isDark = useColorScheme() === 'dark';
   const router = useRouter();
-  const { session, profile, canModerateClub } = useAuth();
+  const { session, profile, canManageClub } = useAuth();
   const isAdmin = profile?.role === 'admin';
 
   const [transitionOrigin] = useState(() => consumeMatchTransitionOrigin());
@@ -60,7 +60,7 @@ export default function MatchDetailScreen() {
   const [lineups, setLineups] = useState<LineupRow[]>([]);
   const [isLineupModalVisible, setIsLineupModalVisible] = useState(false);
   const [loading, setLoading] = useState(!transitionOrigin?.initialMatch);
-  const [isDelegadoModalVisible, setIsDelegadoModalVisible] = useState(false);
+  const [isColaboradorModalVisible, setIsColaboradorModalVisible] = useState(false);
   const [isResultModalVisible, setIsResultModalVisible] = useState(false);
   const [tab, setTab] = useState<'summary' | 'lineups' | 'table' | 'venue'>('summary');
   const now = useNow(match?.status === 'live' || (match?.status === 'finished' && Boolean(match.finishedAt)));
@@ -197,15 +197,15 @@ export default function MatchDetailScreen() {
   }, [sharing]);
 
   // Quem pode o quê (a base de dados é que garante; isto decide o que mostrar).
-  const isDelegate = !isAdmin && Boolean(match && (canModerateClub(match.homeClub.id) || canModerateClub(match.awayClub.id)));
-  const role = { isAdmin, isDelegate };
+  const isCollaborator = !isAdmin && Boolean(match && (canManageClub(match.homeClub.id) || canManageClub(match.awayClub.id)));
+  const role = { isAdmin, isCollaborator };
   const panelAllowed = Boolean(match && canUsePanel(match, role, now));
   const resultAllowed = Boolean(match && canEditResult(match, role, now));
 
   // Abrir um modal a partir do painel: fecha-se o painel primeiro e abre-se o outro logo a seguir
   // (dois modais em simultâneo falham no Android).
   const openFromPanel = (open: (v: boolean) => void) => {
-    setIsDelegadoModalVisible(false);
+    setIsColaboradorModalVisible(false);
     setTimeout(() => open(true), 350);
   };
 
@@ -313,22 +313,22 @@ export default function MatchDetailScreen() {
             estão dentro do painel. O colaborador perde o acesso 1 hora depois do fim; o admin nunca. */}
         {panelAllowed ? (
           <TouchableOpacity
-            style={styles.delegadoBtn}
+            style={styles.colaboradorBtn}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              setIsDelegadoModalVisible(true);
+              setIsColaboradorModalVisible(true);
             }}
           >
             <Ionicons name="create-outline" size={18} color="#ffffff" />
-            <Text style={styles.delegadoBtnText}>Painel do Colaborador</Text>
+            <Text style={styles.colaboradorBtnText}>Painel do Colaborador</Text>
           </TouchableOpacity>
         ) : !session ? (
           <TouchableOpacity
-            style={styles.delegadoLoginBtn}
-            onPress={() => router.push('/delegado-login')}
+            style={styles.colaboradorLoginBtn}
+            onPress={() => router.push('/colaborador-login')}
           >
             <Ionicons name="lock-closed-outline" size={16} color="#71717a" />
-            <Text style={styles.delegadoLoginBtnText}>Sou colaborador neste jogo — iniciar sessão</Text>
+            <Text style={styles.colaboradorLoginBtnText}>Sou colaborador neste jogo — iniciar sessão</Text>
           </TouchableOpacity>
         ) : null}
 
@@ -471,12 +471,12 @@ export default function MatchDetailScreen() {
       {/* Modal de Gestão */}
       {panelAllowed && (
         <>
-          <DelegadoPanelModal
-            visible={isDelegadoModalVisible}
+          <ColaboradorPanelModal
+            visible={isColaboradorModalVisible}
             match={match}
             events={events}
             onChanged={fetchMatchData}
-            onClose={() => setIsDelegadoModalVisible(false)}
+            onClose={() => setIsColaboradorModalVisible(false)}
             onOpenLineup={() => openFromPanel(setIsLineupModalVisible)}
             resultLabel={resultAllowed ? (match.status === 'finished' ? 'Corrigir resultado' : 'Registar resultado') : null}
             onOpenResult={() => openFromPanel(setIsResultModalVisible)}
@@ -536,7 +536,7 @@ const styles = StyleSheet.create({
   statusLabel: { color: '#71717a', fontSize: 12, fontWeight: '700', marginTop: 4 },
   badge: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
   badgeText: { color: '#fff', fontWeight: 'bold' },
-  delegadoBtn: {
+  colaboradorBtn: {
     backgroundColor: '#2f6b4a',
     flexDirection: 'row',
     alignItems: 'center',
@@ -546,8 +546,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     gap: 8,
   },
-  delegadoBtnText: { color: '#ffffff', fontWeight: '700', fontSize: 14 },
-  delegadoLoginBtn: {
+  colaboradorBtnText: { color: '#ffffff', fontWeight: '700', fontSize: 14 },
+  colaboradorLoginBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -559,7 +559,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(150,150,150,0.3)',
     borderStyle: 'dashed',
   },
-  delegadoLoginBtnText: { color: '#71717a', fontWeight: '600', fontSize: 12 },
+  colaboradorLoginBtnText: { color: '#71717a', fontWeight: '600', fontSize: 12 },
   locationCard: { padding: 16, borderRadius: 16, marginBottom: 16 },
   locationHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   stadiumName: { fontSize: 14, fontWeight: '700', marginLeft: 8 },

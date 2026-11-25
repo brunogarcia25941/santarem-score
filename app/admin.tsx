@@ -86,7 +86,7 @@ function ClubPicker({ clubs, value, onChange }: { clubs: Club[]; value: string |
   );
 }
 
-function NewDelegateCard({ clubs, onCreated }: { clubs: Club[]; onCreated: () => void }) {
+function NewCollaboratorCard({ clubs, onCreated }: { clubs: Club[]; onCreated: () => void }) {
   const isDark = useColorScheme() === 'dark';
   const t = getTheme(isDark);
   const [open, setOpen] = useState(false);
@@ -209,7 +209,7 @@ function UserRow({ user, club, clubs, onChanged }: { user: ManagedUser; club?: C
       { text: 'Retirar', style: 'destructive', onPress: () => run(() => adminUsers.setClub(user.id, null)) },
     ]);
 
-  const hasAccess = user.role === 'club_moderator' && Boolean(user.club_id);
+  const hasAccess = user.role === 'collaborator' && Boolean(user.club_id);
 
   return (
     <View style={[styles.card, { backgroundColor: t.surface, marginBottom: 10 }]}>
@@ -334,7 +334,7 @@ export default function AdminScreen() {
   const clubById = useMemo(() => new Map(clubs.map((c) => [c.id, c])), [clubs]);
 
   // Administradores não aparecem (não se mexe neles por aqui).
-  const delegates = users.filter((u) => u.role === 'club_moderator').sort((a, b) => (a.email ?? '').localeCompare(b.email ?? ''));
+  const collaborators = users.filter((u) => u.role === 'collaborator').sort((a, b) => (a.email ?? '').localeCompare(b.email ?? ''));
   const others = users.filter((u) => u.role === 'user').sort((a, b) => (a.email ?? '').localeCompare(b.email ?? ''));
 
   if (authLoading) {
@@ -366,7 +366,7 @@ export default function AdminScreen() {
           nos jogos do seu clube.
         </Text>
 
-        <NewDelegateCard clubs={clubs} onCreated={load} />
+        <NewCollaboratorCard clubs={clubs} onCreated={load} />
 
         {loading ? (
           <ActivityIndicator color={brand.forest} style={{ marginTop: 20 }} />
@@ -380,9 +380,9 @@ export default function AdminScreen() {
           </View>
         ) : (
           <>
-            <Text style={[styles.sectionTitle, { color: t.text }]}>Colaboradores ({delegates.length})</Text>
-            {delegates.length === 0 && <Text style={[styles.hint, { color: t.textFaint, marginBottom: 16 }]}>Ainda não há colaboradores.</Text>}
-            {delegates.map((u) => (
+            <Text style={[styles.sectionTitle, { color: t.text }]}>Colaboradores ({collaborators.length})</Text>
+            {collaborators.length === 0 && <Text style={[styles.hint, { color: t.textFaint, marginBottom: 16 }]}>Ainda não há colaboradores.</Text>}
+            {collaborators.map((u) => (
               <UserRow key={u.id} user={u} club={u.club_id ? clubById.get(u.club_id) : undefined} clubs={clubs} onChanged={load} />
             ))}
 

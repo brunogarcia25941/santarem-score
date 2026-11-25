@@ -13,7 +13,7 @@
 App em React Native / Expo (iOS + Android) para acompanhar as divisões
 distritais de futebol da Associação de Futebol de Santarém (AF Santarém):
 classificações, jogos ao vivo/agendados/terminados, favoritos por clube, e um
-"Painel de Delegado" para representantes de clubes registarem golos/cartões
+"Painel de Colaborador" para representantes de clubes registarem golos/cartões
 em tempo real.
 
 **IMPORTANTE:** o projeto **não tem, nem teve, qualquer parceria oficial**
@@ -26,7 +26,7 @@ etc.
 - ✅ Ligado a um Supabase real (projeto `santarem-score`, ver secção Supabase)
   — já não há dados mock/hardcoded.
 - ✅ 42 clubes reais + emblemas (badges) já estão no Supabase Storage/tabela.
-- ✅ Autenticação de delegados (login por email/password, sem signup público)
+- ✅ Autenticação de colaboradors (login por email/password, sem signup público)
   com RLS a proteger `matches`/`match_events`.
 - ✅ Fila offline de eventos (AsyncStorage) com sincronização automática.
 - ✅ Identidade visual própria (verde floresta + âmbar, nada de "verde
@@ -55,7 +55,7 @@ etc.
 - ✅ Emblemas de clubes são ligações para `/club/[id]` via
   `src/components/ClubBadgeLink.tsx` (usar sempre que um emblema aparece fora
   da própria ficha); na classificação e nos favoritos é a linha/chip inteira.
-- ✅ Relógio de jogo: o delegado inicia/termina as partes no painel (RPC
+- ✅ Relógio de jogo: o colaborador inicia/termina as partes no painel (RPC
   `set_match_period`, hora do servidor); `matches.period_started_at` +
   `minute_offset` e os clientes calculam o minuto (`src/utils/matchClock.ts`,
   `useNow`).
@@ -74,7 +74,7 @@ etc.
   (`ClubStats`, `src/utils/clubStats.ts`): posição, forma (últimos 5), casa/fora,
   golos por jogo, jogos sem sofrer, maior vitória/derrota (sem disciplina, a pedido). Calculado no
   cliente a partir dos jogos terminados. Não há melhores marcadores de propósito:
-  os delegados nem sempre indicam o jogador do golo.
+  os colaboradors nem sempre indicam o jogador do golo.
 - ✅ Partilhar jogo como imagem: ícone no cartão do placar (`app/match/[id].tsx`)
   → `MatchShareCard` (cartaz 4:5, fundo floodlights + degradé azul (cor da AF Santarém); emblemas sem círculo; estádio sempre, divisão/
   série/jornada, emblemas; ao centro hora (agendado), resultado + minuto (direto)
@@ -86,13 +86,13 @@ etc.
   Pillow; fundo do ícone/splash `#0c1326`); `af-santarem.png` é o da AF Santarém
   (aparece no canto superior esquerdo do cartaz de partilha). Mudar o ícone exige
   nova build.
-- ✅ Zona admin (`app/admin.tsx`, entrada em Perfil → "Zona Admin · Delegados", só
-  para `role = admin`): criar conta de delegado (email + palavra-passe, com
+- ✅ Zona admin (`app/admin.tsx`, entrada em Perfil → "Zona Admin · Colaboradors", só
+  para `role = admin`): criar conta de colaborador (email + palavra-passe, com
   "Gerar") ligada a UM clube, mudar de clube, nova palavra-passe, retirar acesso
   (passa a `role = user`; a conta fica). Tudo passa pela Edge Function
   `admin-manage-users` (`src/services/adminUsers.ts`), que valida o token, confirma
   `profiles.role = 'admin'` e usa a chave de serviço; contas admin nunca se alteram
-  por ali. Um delegado = um clube (`profiles.moderated_club_id`).
+  por ali. Um colaborador = um clube (`profiles.collaborator_club_id`).
 - ✅ Barra de separadores e painéis (Modal) somam `useSafeAreaInsets().bottom`
   (`useSheetBottomPadding`): com a navegação de 3 botões do Android (edge-to-edge)
   ficavam por baixo deles.
@@ -128,7 +128,7 @@ etc.
     app.error global). Eventos: favorite.add/remove, onboarding.complete, search(+result_open),
     share.start/done, club.tab, standings.division, home.filter, push.permission/register/pref,
     notification.received/open, login.attempt/success/failure(email tentado)/logout,
-    delegate.* (event_submit/queued/rejected, queue_sync, period, event_delete, lineup,
+    collaborator.* (event_submit/queued/rejected, queue_sync, period, event_delete, lineup,
     result) e error.caught. **Consentimento**: aviso na 1.ª abertura (`ConsentPrompt`, Aceitar/Recusar); sem
     resposta ou com recusa nada é recolhido nem enviado (`track` ignora). Pode mudar-se
     no Perfil → Privacidade ("Ajudar a melhorar a app"). Retenção 180 dias (pg_cron). Vistas
@@ -156,21 +156,21 @@ etc.
 - ✅ Estados vazios (`EmptyState`) e esqueletos de carregamento (`Skeleton`,
   `MatchCardSkeleton`, `TableSkeleton`, `ClubRowSkeleton`, `TileGridSkeleton`) em vez de
   texto solto e rodinhas. Usar sempre estes componentes em listas novas.
-- ✅ Painel do delegado: só regista golos/cartões com o jogo começado e não
+- ✅ Painel do colaborador: só regista golos/cartões com o jogo começado e não
   terminado (RLS garante; admin isento, para o registo retroativo); lista com
   apagar (corrige o marcador via trigger); sobe com o teclado
-  (`useKeyboardHeight`). Delegado de qualquer das duas equipas regista eventos
+  (`useKeyboardHeight`). Colaborador de qualquer das duas equipas regista eventos
   de ambas.
 - ✅ Ficha do clube e Favoritos: separadores Jogos (direto + agendados) /
   Resultados (`MatchTabs`).
-- ✅ Quem pode corrigir: **admin sempre**; **delegado só até 1 hora depois do
+- ✅ Quem pode corrigir: **admin sempre**; **colaborador só até 1 hora depois do
   fim do jogo** (`matches.finished_at`, hora do servidor, preenchida por
   `set_match_period('end_match')`). Jogos terminados à mão (sem `finished_at`)
-  ficam só para o admin. Regra única em `moderator_window_open()` usada pelas
+  ficam só para o admin. Regra única em `collaborator_window_open()` usada pelas
   policies de `matches` (UPDATE), `match_events` e `match_lineups`, e em
   `admin_register_match_result`/`set_match_lineup`. No cliente:
   `src/utils/matchAccess.ts` (só decide o que mostrar). A página do jogo tem UM
-  botão ("Painel do Delegado", escondido ao delegado passada a hora); o onze
+  botão ("Painel do Colaborador", escondido ao colaborador passada a hora); o onze
   inicial e o registar/corrigir resultado abrem a partir de dentro do painel
   (e o ecrã de resultado também abre o onze). Os modais não se empilham: o
   painel fecha-se primeiro (`openFromPanel`).
@@ -178,7 +178,7 @@ etc.
   "Guardar" está no topo e fechar com alterações pede confirmação.
 - ✅ Onze inicial: tabela `match_lineups` (número e/ou nome por jogador, máx.
   11 por equipa, número único por equipa) + RPC `set_match_lineup` que
-  substitui o onze de UMA equipa. Delegado de qualquer das duas equipas (ou
+  substitui o onze de UMA equipa. Colaborador de qualquer das duas equipas (ou
   admin) edita ambas; o editor (`LineupEditorModal`) só grava as equipas
   alteradas. Mostrado em `LineupCard` na página do jogo, casa à esquerda e
   visitante à direita; leitura pública e em tempo real.
@@ -190,14 +190,15 @@ etc.
   credencial FCM V1 e ligá-la no EAS (`eas credentials`) antes da próxima
   build Android — sem isso o token nem chega a ser gerado.
 
-## Terminologia: "Colaborador" (não "Delegado")
+## Terminologia: "Colaborador"
 
-Em toda a interface o papel `club_moderator` chama-se **Colaborador**: pode ser um
-delegado ou um adepto assíduo a quem o Bruno decida dar acesso a um clube. As secções
-antigas deste ficheiro ainda dizem "delegado" — é a mesma coisa. Nomes internos
-mantêm-se (rota `delegado-login`, `DelegadoPanelModal`, eventos `delegate.*`, nomes das
-policies RLS). Textos novos visíveis ao utilizador usam sempre "colaborador". No Perfil,
-o cartão da conta só aparece com sessão iniciada.
+O papel de quem gere os jogos de um clube chama-se **Colaborador** em toda a app e no
+código (pode ser um delegado do clube ou um adepto assíduo a quem o Bruno decida dar
+acesso). Na base de dados: `profiles.role = 'collaborator'`,
+`profiles.collaborator_club_id`, função `collaborator_window_open()`, policies
+"Colaboradores ..."; na app: rota `colaborador-login`, `ColaboradorPanelModal`,
+eventos `collaborator.*`. Migrações antigas ainda mostram os nomes anteriores
+(delegado / club_moderator). No Perfil, o cartão da conta só aparece com sessão iniciada.
 
 ## Stack técnica
 
@@ -272,7 +273,7 @@ app/
     select-clubs.tsx — ecrã de primeira utilização, escolher clubes favoritos
   match/[id].tsx     — página de detalhe de um jogo
   club/[id].tsx      — ficha de um clube
-  delegado-login.tsx — login modal para delegados de clube
+  colaborador-login.tsx — login modal para colaboradors de clube
   _layout.tsx        — root layout: Stack principal, providers, watchers globais
 src/
   components/        — componentes reutilizáveis (ver secção própria)
@@ -296,16 +297,16 @@ assets/images/textures/ — grass-background.jpg e floodlights.jpg (fotos reais
   implementar).
 - View `standings` — calcula classificação a partir de `matches` (pontos,
   vitórias, empates, derrotas, golos marcados/sofridos, diferença).
-- `profiles.role` é um enum (`user` | `club_moderator` | `admin`).
-  `club_moderator` tem `moderated_club_id` a apontar para o clube que pode
+- `profiles.role` é um enum (`user` | `collaborator` | `admin`).
+  `collaborator` tem `collaborator_club_id` a apontar para o clube que pode
   gerir. A conta `brunoferreiragarcia2005@gmail.com` está promovida a
   **admin**.
 - Políticas RLS relevantes:
   - `matches`: SELECT público (`Jogos Leitura Pública`); UPDATE só para
-    `admin` ou para o `club_moderator` do clube em causa (`Delegados podem
+    `admin` ou para o `collaborator` do clube em causa (`Colaboradors podem
     atualizar os seus jogos`).
   - `match_events`: SELECT público (`Eventos Leitura Pública`); INSERT só
-    para `authenticated` (`Delegados podem registar eventos dos seus
+    para `authenticated` (`Colaboradors podem registar eventos dos seus
     jogos`).
   - Antes desta ligação ao Supabase, RLS estava **desativado** em `matches`/
     `match_events`/`push_tokens` — foi uma falha de segurança real que foi
@@ -559,7 +560,7 @@ email antigo.
   `finished_at` (só o admin os corrige). Adiados com nova data: Tomar–Vasco Gama e
   Torres Novas–Ouriquense (31/01/2027 15:00), Rebocho–Benavente (31/01/2027 15:00),
   Ouriense–Coruchense (14/03/2027 16:00). Mocarriense–Mação realizou-se a 23/09.
-- Contas de delegados geridas na Zona Admin da app; só há uma conta admin (a do
+- Contas de colaboradors geridas na Zona Admin da app; só há uma conta admin (a do
   Bruno, promovida por SQL).
 - Avisos de segurança do Supabase por resolver (ver secção própria) — não
   urgentes mas relevantes antes de um lançamento público.
