@@ -10,7 +10,13 @@ import { GoalAlertBanner } from '@/components/GoalAlertBanner';
 import { vibrateGoal } from '@/services/notifications';
 import { supabase } from '@/services/supabase';
 import { syncOfflineQueue } from '@/services/matchActions';
-import { anyPushEnabled, getPushPrefs, syncPushToken } from '@/services/pushNotifications';
+import {
+  anyPushEnabled,
+  askPushPermissionOnFirstLaunch,
+  getPushPermissionStatus,
+  getPushPrefs,
+  syncPushToken,
+} from '@/services/pushNotifications';
 import { flush, initAnalytics, newSession, setScreen, track } from '@/services/analytics';
 import { ConsentPrompt } from '@/components/ConsentPrompt';
 
@@ -199,14 +205,40 @@ function AnalyticsTracker() {
 
 function PushTokenSync() {
   const { favoriteClubIds } = useFavorites();
+  const wasGranted = useRef<boolean | null>(null);
 
   useEffect(() => {
-    // Só ressincroniza (novo token ou novos favoritos) se o utilizador já
-    // tinha ativado as notificações no Perfil — nunca pede permissão sozinho.
-    getPushPrefs().then((prefs) => {
-      if (anyPushEnabled(prefs)) syncPushToken(favoriteClubIds, prefs);
+    // Regista o aparelho (novo token ou novos favoritos). Nunca pede permissão sozinho.
+    const sync = () =>
+      getPushPrefs().then((prefs) => {
+        if (anyPushEnabled(prefs)) syncPushToken(favoriteClubIds, prefs);
+      });
+    sync();
+    getPushPermissionStatus().then((status) => (wasGranted.current = status === 'granted'));
+
+    // Quem vai às definições do telemóvel ligar as notificações fica registado ao voltar.
+    const sub = AppState.addEventListener('change', async (state: AppStateStatus) => {
+      if (state !== 'active') return;
+      const granted = (await getPushPermissionStatus()) === 'granted';
+      if (granted && wasGranted.current === false) sync();
+      wasGranted.current = granted;
     });
+    return () => sub.remove();
   }, [favoriteClubIds]);
+
+  return null;
+}
+
+/** Na 1.ª abertura, depois do aviso de privacidade, pede a permissão de notificações ao sistema. */
+function FirstLaunchPush({ ready }: { ready: boolean }) {
+  const { favoriteClubIds, isLoading } = useFavorites();
+  const done = useRef(false);
+
+  useEffect(() => {
+    if (!ready || isLoading || done.current) return;
+    done.current = true;
+    askPushPermissionOnFirstLaunch(favoriteClubIds);
+  }, [ready, isLoading]);
 
   return null;
 }
@@ -232,6 +264,7 @@ function OfflineQueueSync() {
 
 export default function RootLayout() {
   const isDark = useColorScheme() === 'dark';
+  const [consentResolved, setConsentResolved] = useState(false);
 
   // Cores do próprio ecrã e do cabeçalho, para o fundo nativo do stack
   // nunca ser o branco por omissão do react-native-screens — era isso
@@ -304,7 +337,8 @@ export default function RootLayout() {
             }}
           />
         </Stack>
-        <ConsentPrompt />
+        <ConsentPrompt onResolved={() => setConsentResolved(true)} />
+        <FirstLaunchPush ready={consentResolved} />
         <StatusBar style="auto" />
       </FavoritesProvider>
       </AuthProvider>

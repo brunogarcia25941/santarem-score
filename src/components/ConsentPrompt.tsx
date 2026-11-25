@@ -10,24 +10,29 @@ import { getAnalyticsConsent, setAnalyticsEnabled } from '@/services/analytics';
  * Enquanto não houver resposta a app não recolhe nem envia nada. A escolha pode ser mudada
  * a qualquer momento no Perfil. Não se fecha sem escolher (o botão "voltar" não o dispensa).
  */
-export function ConsentPrompt() {
+export function ConsentPrompt({ onResolved }: { onResolved?: () => void }) {
   const t = getTheme(useColorScheme() === 'dark');
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     getAnalyticsConsent().then((answer) => {
-      if (!cancelled && answer === null) setVisible(true);
+      if (cancelled) return;
+      if (answer === null) setVisible(true);
+      else onResolved?.();
     });
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const answer = async (accepted: boolean) => {
     Haptics.selectionAsync();
     setVisible(false);
     await setAnalyticsEnabled(accepted);
+    // Espera a janela fechar antes de aparecer a do sistema (notificações).
+    setTimeout(() => onResolved?.(), 450);
   };
 
   return (

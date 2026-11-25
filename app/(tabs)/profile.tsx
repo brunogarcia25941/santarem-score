@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Alert,
   Linking,
+  AppState,
   useColorScheme,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,7 +19,9 @@ import { useAuth } from '@/context/AuthContext';
 import { useFavorites } from '@/context/FavoritesContext';
 import {
   PushPrefs,
+  DEFAULT_PREFS,
   anyPushEnabled,
+  requestPushPermission,
   getPushPermissionStatus,
   getPushPrefs,
   setPushPrefs,
@@ -39,43 +42,92 @@ export default function ProfileScreen() {
   const { session, profile, signOut } = useAuth();
   const { favoriteClubIds } = useFavorites();
 
-  const [prefs, setPrefs] = useState<PushPrefs>({ goals: false, start: false, end: false });
+  const [prefs, setPrefs] = useState<PushPrefs>(DEFAULT_PREFS);
+  // Estado da permissão no telemóvel (para avisar quando está desligada).
+  const [permission, setPermission] = useState<string | null>(null);
   const [togglingPush, setTogglingPush] = useState(false);
   const [analyticsOn, setAnalyticsOn] = useState(true);
 
   useEffect(() => {
     getPushPrefs().then(setPrefs);
     getAnalyticsEnabled().then(setAnalyticsOn);
+    const refresh = () => getPushPermissionStatus().then(setPermission);
+    refresh();
+    // Ao voltar das definições do telemóvel (ou da janela de permissão) atualiza o estado.
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') refresh();
+    });
+    return () => sub.remove();
   }, []);
+
+  /** Explica porque não há notificações e, quando o sistema já não pergunta, leva às definições. */
+  const explainBlocked = () =>
+    Alert.alert(
+      'Notificações desativadas',
+      'O telemóvel não está a permitir notificações desta app. Liga-as nas definições do telemóvel.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Abrir definições', onPress: () => Linking.openSettings() },
+      ]
+    );
 
   const handleToggle = async (key: keyof PushPrefs, value: boolean) => {
     const next = { ...prefs, [key]: value };
     setTogglingPush(true);
     try {
-      if (anyPushEnabled(next)) {
-        // Pede permissão (se ainda não há) e regista o aparelho com as preferências.
-        const ok = await syncPushToken(favoriteClubIds, next);
-        if (!ok) {
-          const status = await getPushPermissionStatus();
-          Alert.alert(
-            'Não foi possível ativar',
-            status === 'denied'
-              ? 'As notificações estão bloqueadas para esta app nas definições do telemóvel.'
-              : 'As notificações push só funcionam numa build instalada (não no Expo Go).',
-            status === 'denied'
-              ? [{ text: 'Abrir Definições', onPress: () => Linking.openSettings() }, { text: 'Fechar' }]
-              : [{ text: 'OK' }]
-          );
-          setTogglingPush(false);
+      if (!anyPushEnabled(next)) {
+        // Nada ligado: o aparelho deixa de estar registado.
+        await disablePushToken();
+      } else if (value) {
+        // A ligar um aviso: garante a permissão antes de o dar como ativo.
+        const { granted } = await requestPushPermission();
+        setPermission(await getPushPermissionStatus());
+        if (!granted) {
+          explainBlocked();
+          return;
+        }
+        if (!(await syncPushToken(favoriteClubIds, next))) {
+          Alert.alert('Não foi possível ativar', 'Verifica a ligação à internet. As notificações só funcionam numa build instalada.');
           return;
         }
       } else {
-        // Nada ligado: o aparelho deixa de estar registado.
-        await disablePushToken();
+        // A desligar um aviso (os outros ficam): atualiza o registo, se houver permissão.
+        await syncPushToken(favoriteClubIds, next);
       }
       await setPushPrefs(next);
       setPrefs(next);
       track('push.pref', { key, value });
+    } finally {
+      setTogglingPush(false);
+    }
+  };
+
+  /** "Não estás a receber notificações?": volta a pedir a permissão e regista o aparelho. */
+  const fixNotifications = async () => {
+    setTogglingPush(true);
+    try {
+      const { granted } = await requestPushPermission();
+      setPermission(await getPushPermissionStatus());
+      track('push.fix', { granted });
+      if (!granted) {
+        explainBlocked();
+        return;
+      }
+      // Se os três estavam desligados, voltam a ligar-se.
+      const next = anyPushEnabled(prefs) ? prefs : DEFAULT_PREFS;
+      const ok = await syncPushToken(favoriteClubIds, next);
+      if (!ok) {
+        Alert.alert('Não foi possível ativar', 'Verifica a ligação à internet e tenta outra vez.');
+        return;
+      }
+      await setPushPrefs(next);
+      setPrefs(next);
+      Alert.alert(
+        'Notificações ativas',
+        favoriteClubIds.length > 0
+          ? 'Está tudo pronto: vais receber os avisos dos jogos dos teus clubes favoritos.'
+          : 'Está tudo pronto. Escolhe clubes favoritos para começares a receber avisos.'
+      );
     } finally {
       setTogglingPush(false);
     }
@@ -128,6 +180,23 @@ export default function ProfileScreen() {
             </View>
             <Switch value={prefs.end} onValueChange={(v) => handleToggle('end', v)} disabled={togglingPush} />
           </View>
+          <View style={styles.divider} />
+
+          <TouchableOpacity style={styles.actionRow} onPress={fixNotifications} disabled={togglingPush}>
+            <Ionicons name="notifications-outline" size={20} color="#2f6b4a" />
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.settingLabel, { color: isDark ? '#eef0f2' : '#1a1b1e' }]}>
+                Não estás a receber notificações?
+              </Text>
+              <Text style={styles.settingSub}>
+                {permission && permission !== 'granted' && permission !== 'unsupported'
+                  ? 'Estão desativadas no telemóvel. Toca aqui para as ativar.'
+                  : 'Toca aqui para as ativar.'}
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color="#71717a" />
+          </TouchableOpacity>
+
           <Text style={styles.notifsDisclaimer}>
             Recebes avisos dos jogos dos clubes que tens nos favoritos.
           </Text>

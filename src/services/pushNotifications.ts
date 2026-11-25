@@ -8,6 +8,7 @@ import { track } from './analytics';
 
 const PUSH_PREFS_KEY = '@santarem_score:push_prefs';
 const LEGACY_PUSH_ENABLED_KEY = '@santarem_score:push_enabled'; // versão antiga: um só switch (golos)
+const ASKED_KEY = '@santarem_score:push_asked'; // já se pediu a permissão na 1.ª abertura
 
 /** O que o utilizador quer receber (independente da permissão do sistema). */
 export interface PushPrefs {
@@ -17,6 +18,8 @@ export interface PushPrefs {
 }
 
 const NO_PREFS: PushPrefs = { goals: false, start: false, end: false };
+/** Por predefinição os três avisos vêm ligados (só chegam se o telemóvel der permissão). */
+export const DEFAULT_PREFS: PushPrefs = { goals: true, start: true, end: true };
 
 export const anyPushEnabled = (p: PushPrefs) => p.goals || p.start || p.end;
 
@@ -29,9 +32,9 @@ export async function getPushPrefs(): Promise<PushPrefs> {
       return NO_PREFS;
     }
   }
-  // Migração: quem tinha o switch antigo ligado mantém os golos.
+  // Quem tinha desligado o switch antigo continua sem avisos; os restantes ficam com tudo ligado.
   const legacy = await AsyncStorage.getItem(LEGACY_PUSH_ENABLED_KEY);
-  return legacy === 'true' ? { ...NO_PREFS, goals: true } : NO_PREFS;
+  return legacy === 'false' ? NO_PREFS : DEFAULT_PREFS;
 }
 
 export async function setPushPrefs(prefs: PushPrefs): Promise<void> {
@@ -66,25 +69,60 @@ Notifications.setNotificationHandler({
 
 let cachedToken: string | null = null;
 
+/**
+ * No Android 13+ o pedido de permissão do sistema só aparece depois de existir pelo menos um
+ * canal de notificações, por isso o canal cria-se ANTES de pedir.
+ */
+async function ensureAndroidChannel() {
+  if (Platform.OS !== 'android') return;
+  await Notifications.setNotificationChannelAsync('default', {
+    name: 'default',
+    importance: Notifications.AndroidImportance.HIGH,
+  });
+}
+
+/**
+ * Pede a permissão com a janela do próprio telemóvel. `canAskAgain: false` quer dizer que o
+ * sistema já não volta a mostrar a janela (foi recusada antes): só dá para mudar nas definições.
+ */
+export async function requestPushPermission(): Promise<{ granted: boolean; canAskAgain: boolean }> {
+  if (!Device.isDevice) return { granted: false, canAskAgain: false };
+  try {
+    await ensureAndroidChannel();
+    const current = await Notifications.getPermissionsAsync();
+    if (current.status === 'granted') return { granted: true, canAskAgain: true };
+    if (current.canAskAgain === false) return { granted: false, canAskAgain: false };
+    const answer = await Notifications.requestPermissionsAsync();
+    track('push.permission', { status: answer.status });
+    return { granted: answer.status === 'granted', canAskAgain: answer.canAskAgain !== false };
+  } catch (err) {
+    console.error('Erro a pedir permissão de notificações:', err);
+    return { granted: false, canAskAgain: false };
+  }
+}
+
+/**
+ * Na primeira abertura da app pede logo a permissão (sem janela própria antes). Só uma vez:
+ * depois, quem quiser usa "Não estás a receber notificações?" no Perfil.
+ */
+export async function askPushPermissionOnFirstLaunch(favoriteClubIds: string[]): Promise<void> {
+  if (await AsyncStorage.getItem(ASKED_KEY)) return;
+  await AsyncStorage.setItem(ASKED_KEY, 'true');
+  const { granted } = await requestPushPermission();
+  if (!granted) return;
+  const prefs = await getPushPrefs();
+  await setPushPrefs(prefs);
+  if (anyPushEnabled(prefs)) await syncPushToken(favoriteClubIds, prefs);
+}
+
+/** Token deste aparelho. Nunca pede permissão: sem ela devolve null. */
 async function getExpoPushToken(): Promise<string | null> {
   if (cachedToken) return cachedToken;
   if (!Device.isDevice) return null; // emuladores não têm push
 
-  const { status: existing } = await Notifications.getPermissionsAsync();
-  let status = existing;
-  if (status !== 'granted') {
-    const req = await Notifications.requestPermissionsAsync();
-    status = req.status;
-  }
-  track('push.permission', { status });
+  const { status } = await Notifications.getPermissionsAsync();
   if (status !== 'granted') return null;
-
-  if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync('default', {
-      name: 'default',
-      importance: Notifications.AndroidImportance.HIGH,
-    });
-  }
+  await ensureAndroidChannel();
 
   const projectId = Constants.expoConfig?.extra?.eas?.projectId;
   if (!projectId) return null; // build sem EAS configurado (ex.: Expo Go)
@@ -100,8 +138,9 @@ async function getExpoPushToken(): Promise<string | null> {
 }
 
 /**
- * Pede permissão (se preciso) e sincroniza o token com os clubes favoritos
- * atuais. Chamado no arranque e sempre que os favoritos mudam.
+ * Sincroniza o token com os clubes favoritos e as preferências. Não pede permissão (para
+ * isso há `requestPushPermission`). Chamado no arranque, quando os favoritos mudam e depois
+ * de se dar permissão.
  */
 export async function syncPushToken(favoriteClubIds: string[], prefs: PushPrefs): Promise<boolean> {
   const token = await getExpoPushToken();

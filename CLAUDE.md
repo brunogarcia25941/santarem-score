@@ -62,8 +62,8 @@ etc.
 - ✅ Push de início e fim de jogo: trigger `notify_match_status` em `matches`
   (scheduled/postponed→live = MATCH_START; live→finished = MATCH_END; o
   registo retroativo nunca notifica). Preferências por aparelho em
-  `push_tokens.notify_goals/notify_start/notify_end` (golos por omissão; início
-  e fim opt-in), geridas pelos 3 switches do Perfil (`getPushPrefs`). Intervalo/2.ª parte não notificam.
+  `push_tokens.notify_goals/notify_start/notify_end` (na app os três vêm ligados por
+  predefinição), geridas pelos 3 switches do Perfil (`getPushPrefs`). Intervalo/2.ª parte não notificam.
 - ✅ Lembrete 15 min antes: `pg_cron` corre `send_match_reminders()` todos os
   minutos (job `lembrete-jogos-15-min`); para jogos `scheduled` que começam nos
   próximos 15 min e com `matches.reminder_sent_at` nulo, marca-o e chama a Edge
@@ -136,6 +136,12 @@ etc.
   - `notification_log`: cada envio de push (destinatários, enviados, tokens inválidos, erro,
     duração), escrito pela Edge Function `send-goal-notification`. Retenção 365 dias.
   A hora (`at`) é a do servidor; o golo registado offline fica com a hora da sincronização.
+- ✅ Permissão de notificações: pedida pelo sistema na 1.ª abertura (`FirstLaunchPush`,
+  a seguir ao aviso de privacidade, uma só vez), sem janela própria. O canal Android é
+  criado ANTES de pedir (obrigatório no Android 13+). Só `requestPushPermission` pede;
+  `syncPushToken`/`getExpoPushToken` nunca pedem. No Perfil, "Não estás a receber
+  notificações?" volta a pedir ou, se o sistema já não pergunta, abre as definições;
+  `PushTokenSync` regista o aparelho ao voltar com a permissão dada.
 - ✅ Página do jogo com separadores (`SegmentedTabs`): Resumo (acontecimentos), Onzes,
   Tabela (`MatchStandingsTab`: classificação da divisão com as duas equipas em
   destaque, só carrega ao abrir) e Local. Todos os cartões têm 16 de intervalo.
